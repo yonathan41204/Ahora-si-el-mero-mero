@@ -1,7 +1,9 @@
 package dev.undesarrolladormas.ensamblador.funcs;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,82 +15,67 @@ public class CodeSegmentAnalyzer {
     private static final String REG16 = "(AX|BX|CX|DX|SI|DI|BP|SP)";
     private static final String REG32 = "(EAX|EBX|ECX|EDX|ESI|EDI|EBP|ESP)";
     private static final String MEM = "\\[[0-9A-Fa-f]{1,8}h\\]";
-    private static final String MEM16 = "\\[[0-9A-Fa-f]{1,4}h\\]"; // Asumimos que las direcciones de memoria son de 16 bits
-    private static final String MEM8 = "\\[[0-9A-Fa-f]{1,2}h\\]"; // Asumimos que las direcciones de memoria son de 8 bits
+    private static final String MEM16 = "\\[[0-9A-Fa-f]{1,4}h\\]";
+    private static final String MEM8 = "\\[[0-9A-Fa-f]{1,2}h\\]";
     private static final String ACUM = "(AL|AX|EAX)";
     private static final String INM = "\\d+(h|b|o|q)?";
     private static final String REGSEG = "(CS|DS|ES|SS|FS|GS)";
+    private static final Pattern LABEL_PATTERN = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*:$");
+    private static final List<String> RESERVED_WORDS = List.of(
+            "add", "mov", "movzx", "or", "pop", "shr", "shl", "sub", "jmp", "jz", "main", "proc", "nop", "ends", ".data",
+            ".code");
 
-    private final Pattern ADD_PATTERN;
-    private final Pattern MOV_PATTERN;
-    private final Pattern MOVZX_PATTERN;
-    private final Pattern OR_PATTERN;
-    private final Pattern POP_PATTERN;
-    private final Pattern SHR_PATTERN;
-    private final Pattern SHL_PATTERN;
-    private final Pattern SUB_PATTERN;
-    
+    // Patrones de las instrucciones
+    private final Pattern LD_PATTERN;
+    private final Pattern CLI_PATTERN;
+    private final Pattern NOP_PATTERN;
+    private final Pattern POPA_PATTERN;
+    private final Pattern AAD_PATTERN;
+    private final Pattern AAM_PATTERN;
+    private final Pattern MUL_PATTERN;
+    private final Pattern INC_PATTERN;
+    private final Pattern IDIV_PATTERN;
+    private final Pattern SAR_PATTERN;
+    private final Pattern TEST_PATTERN;
+    private final Pattern RCL_PATTERN;
+    private final Pattern XCHG_PATTERN;
+    private final Pattern JB_PATTERN;
+    private final Pattern JE_PATTERN;
+    private final Pattern JNLE_PATTERN;
+    private final Pattern JNP_PATTERN;
+    private final Pattern JP_PATTERN;
+    private final Pattern JCXZ_PATTERN;
+    private final Pattern JZ_PATTERN;
+    private final Pattern INT_PATTERN;
+
+    private Set<String> declaredLabels;  // Para almacenar las etiquetas declaradas
+
     public CodeSegmentAnalyzer(List<Symbol> vars) {
-        var pattern = new StringBuilder();
-        for (int i = 0; i < vars.size(); i++) {
-            var var = vars.get(i); 
-            pattern.append(var.getName());
-            if (i < vars.size() - 1) {
-                pattern.append('|');
-            }
-        }
-        
-        ADD_PATTERN = Pattern.compile(
-            "^add\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + pattern.toString() + "),\\s*(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + INM + "|" + ACUM + "|" + pattern.toString() + ")$",
-            Pattern.CASE_INSENSITIVE
-        );
+        // Instrucciones válidas
+        LD_PATTERN = Pattern.compile("^LD\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + ")$", Pattern.CASE_INSENSITIVE);
+        CLI_PATTERN = Pattern.compile("^CLI$", Pattern.CASE_INSENSITIVE);
+        NOP_PATTERN = Pattern.compile("^NOP$", Pattern.CASE_INSENSITIVE);
+        POPA_PATTERN = Pattern.compile("^POPA$", Pattern.CASE_INSENSITIVE);
+        AAD_PATTERN = Pattern.compile("^AAD$", Pattern.CASE_INSENSITIVE);
+        AAM_PATTERN = Pattern.compile("^AAM$", Pattern.CASE_INSENSITIVE);
+        MUL_PATTERN = Pattern.compile("^MUL\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + ")$", Pattern.CASE_INSENSITIVE);
+        INC_PATTERN = Pattern.compile("^INC\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + ")$", Pattern.CASE_INSENSITIVE);
+        IDIV_PATTERN = Pattern.compile("^IDIV\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + ")$", Pattern.CASE_INSENSITIVE);
+        SAR_PATTERN = Pattern.compile("^SAR\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "),\\s*" + INM + "$", Pattern.CASE_INSENSITIVE);
+        TEST_PATTERN = Pattern.compile("^TEST\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "),\\s*(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + ")$", Pattern.CASE_INSENSITIVE);
+        RCL_PATTERN = Pattern.compile("^RCL\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "),\\s*" + INM + "$", Pattern.CASE_INSENSITIVE);
+        XCHG_PATTERN = Pattern.compile("^XCHG\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "),\\s*(" + REG8 + "|" + REG16 + "|" + REG32 + ")$", Pattern.CASE_INSENSITIVE);
+        JB_PATTERN = Pattern.compile("^JB\\s+\\w+$", Pattern.CASE_INSENSITIVE);
+        JE_PATTERN = Pattern.compile("^JE\\s+\\w+$", Pattern.CASE_INSENSITIVE);
+        JNLE_PATTERN = Pattern.compile("^JNLE\\s+\\w+$", Pattern.CASE_INSENSITIVE);
+        JNP_PATTERN = Pattern.compile("^JNP\\s+\\w+$", Pattern.CASE_INSENSITIVE);
+        JP_PATTERN = Pattern.compile("^JP\\s+\\w+$", Pattern.CASE_INSENSITIVE);
+        JCXZ_PATTERN = Pattern.compile("^JCXZ\\s+\\w+$", Pattern.CASE_INSENSITIVE);
+        JZ_PATTERN = Pattern.compile("^JZ\\s+\\w+$", Pattern.CASE_INSENSITIVE);
+        INT_PATTERN = Pattern.compile("^INT\\s+" + INM + "$", Pattern.CASE_INSENSITIVE);
 
-        MOV_PATTERN = Pattern.compile(
-            "^mov\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + REGSEG + "|" + pattern.toString() +"),\\s*(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + INM + "|" + REGSEG + "|" + pattern.toString() +")$",
-            Pattern.CASE_INSENSITIVE
-        );
-        
-        MOVZX_PATTERN = Pattern.compile(
-            "^movzx\\s+(" + REG32 + "|" + REG16 + "),\\s*(" + REG16 + "|" + REG8 + "|" + MEM16 + "|" + MEM8 + "|" + pattern.toString() +")$",
-            Pattern.CASE_INSENSITIVE
-        );
-
-        OR_PATTERN = Pattern.compile(
-            "^or\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + pattern.toString() +"),\\s*(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + INM + "|" + ACUM + "|" + pattern.toString() +")$",
-            Pattern.CASE_INSENSITIVE
-        );
-    
-        POP_PATTERN = Pattern.compile(
-            "^pop\\s+(" + REG16 + "|" + REG32 + "|" + MEM16 + "|" + MEM + "|" + REGSEG + "|" + pattern.toString() +")$",
-            Pattern.CASE_INSENSITIVE
-        );
-
-        SHR_PATTERN = Pattern.compile(
-            "^shr\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + pattern.toString() +"),\\s*(CL|" + INM + ")$",
-            Pattern.CASE_INSENSITIVE
-        );
-
-        SHL_PATTERN = Pattern.compile(
-            "^shl\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + pattern.toString() +"),\\s*(CL|" + INM + ")$",
-            Pattern.CASE_INSENSITIVE
-        );
-
-        SUB_PATTERN = Pattern.compile(
-            "^sub\\s+(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + pattern.toString() +"),\\s*(" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "|" + INM + "|" + ACUM + "|" + pattern.toString() +")$",
-            Pattern.CASE_INSENSITIVE
-        );
-
-    } 
-
-    private static final Pattern JZ_PATTERN = Pattern.compile(
-        "^jz\\s+\\w+$",
-        Pattern.CASE_INSENSITIVE
-    );
-
-    private static final Pattern NOP_PATTERN = Pattern.compile(
-        "^nop$",
-        Pattern.CASE_INSENSITIVE
-    );
+        declaredLabels = new HashSet<>();
+    }
 
     public List<String[]> analyze(String assemblyCode) {
         List<String[]> analysisResults = new ArrayList<>();
@@ -99,17 +86,25 @@ public class CodeSegmentAnalyzer {
             line = line.trim();
 
             if (line.isEmpty()) {
-                continue; // Omitir líneas vacías
+                continue;
+            }
+
+            if (line.startsWith(";") || line.isEmpty()) {
+                continue;
+            }
+
+            if (line.contains(";")) {
+                line = line.split(";", 2)[0].trim();
             }
 
             if (line.equalsIgnoreCase(".code segment") || line.equalsIgnoreCase(".code")) {
                 inCodeSegment = true;
-                analysisResults.add(new String[] { line, "correcta" });
+                analysisResults.add(new String[]{line, "correcta"});
                 continue;
             } else if (line.equalsIgnoreCase("ends")) {
                 if (inCodeSegment) {
                     inCodeSegment = false;
-                    analysisResults.add(new String[] { line, "correcta" });
+                    analysisResults.add(new String[]{line, "correcta"});
                 }
                 continue;
             } else if (line.equalsIgnoreCase(".data segment") || line.equalsIgnoreCase(".data")) {
@@ -118,132 +113,39 @@ public class CodeSegmentAnalyzer {
             }
 
             if (inCodeSegment) {
-                if (line.equalsIgnoreCase("main proc") || line.toLowerCase().startsWith("invoke")) {
-                    continue; // Omitir líneas que contienen "main proc" o que comienzan con "invoke"
+                if (line.endsWith(":")) {
+                    if (LABEL_PATTERN.matcher(line).matches()) {
+                        String label = line.substring(0, line.length() - 1);
+                        if (RESERVED_WORDS.contains(label.toLowerCase())) {
+                            analysisResults.add(new String[]{line, "incorrecta", "Etiqueta no puede ser palabra reservada"});
+                        } else {
+                            declaredLabels.add(label);
+                            analysisResults.add(new String[]{line, "correcta"});
+                        }
+                    } else {
+                        analysisResults.add(new String[]{line, "incorrecta", "Etiqueta no válida"});
+                    }
+                    continue;
                 }
 
-                if (line.equalsIgnoreCase("nop")) {
-                    if (NOP_PATTERN.matcher(line).matches()) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    }
-                } else if (line.toLowerCase().startsWith("add")) {
-                    if (isValidInstruction(line, ADD_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("mov")) {
-                    if (isValidInstruction(line, MOV_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("movzx")) {
-                    if (isValidInstruction(line, MOVZX_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("or")) {
-                    if (isValidInstruction(line, OR_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("pop")) {
-                    if (isValidInstruction(line, POP_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("shr")) {
-                    if (isValidInstruction(line, SHR_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("shl")) {
-                    if (isValidInstruction(line, SHL_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("sub")) {
-                    if (isValidInstruction(line, SUB_PATTERN)) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
-                } else if (line.toLowerCase().startsWith("jz")) {
-                    if (JZ_PATTERN.matcher(line).matches()) {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta" });
-                    }
+                if (LD_PATTERN.matcher(line).matches() || CLI_PATTERN.matcher(line).matches() ||
+                        NOP_PATTERN.matcher(line).matches() || POPA_PATTERN.matcher(line).matches() ||
+                        AAD_PATTERN.matcher(line).matches() || AAM_PATTERN.matcher(line).matches() ||
+                        MUL_PATTERN.matcher(line).matches() || INC_PATTERN.matcher(line).matches() ||
+                        IDIV_PATTERN.matcher(line).matches() || SAR_PATTERN.matcher(line).matches() ||
+                        TEST_PATTERN.matcher(line).matches() || RCL_PATTERN.matcher(line).matches() ||
+                        XCHG_PATTERN.matcher(line).matches() || JB_PATTERN.matcher(line).matches() ||
+                        JE_PATTERN.matcher(line).matches() || JNLE_PATTERN.matcher(line).matches() ||
+                        JNP_PATTERN.matcher(line).matches() || JP_PATTERN.matcher(line).matches() ||
+                        JCXZ_PATTERN.matcher(line).matches() || JZ_PATTERN.matcher(line).matches() ||
+                        INT_PATTERN.matcher(line).matches()) {
+                    analysisResults.add(new String[]{line, "correcta"});
                 } else {
-                    analysisResults.add(new String[] { line, "incorrecta" });
+                    analysisResults.add(new String[]{line, "incorrecta", "No válida"});
                 }
             }
         }
 
         return analysisResults;
-    }
-
-    private boolean isValidInstruction(String line, Pattern pattern) {
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.matches()) {
-            if (pattern == POP_PATTERN) {
-                return true; // No need to check operand sizes for POP
-            }
-            String operand1 = matcher.group(1);
-            String operand2 = matcher.groupCount() > 1 ? matcher.group(2) : null;
-
-            if (operand1 != null) operand1 = operand1.trim();
-            if (operand2 != null) operand2 = operand2.trim();
-
-            // Verificar que ambos operandos sean del mismo tamaño
-            return operand2 == null || areOperandsSameSize(operand1, operand2);
-        }
-        return false;
-    }
-
-    private boolean areOperandsSameSize(String operand1, String operand2) {
-        int size1 = getOperandSize(operand1);
-        int size2 = getOperandSize(operand2);
-        return size1 == size2;
-    }
-
-    private int getOperandSize(String operand) {
-        if (operand.matches(REG8)) {
-            return 8;
-        } else if (operand.matches(REG16)) {
-            return 16;
-        } else if (operand.matches(REG32)) {
-            return 32;
-        } else if (operand.matches(MEM)) {
-            // Asumimos que las direcciones de memoria son de 32 bits
-            return 32;
-        } else if (operand.matches(MEM16)) {
-            return 16;
-        } else if (operand.matches(MEM8)) {
-            return 8;
-        } else if (operand.matches(ACUM)) {
-            return getRegisterSize(operand);
-        } else if (operand.matches(INM)) {
-            // Asumimos que los valores inmediatos son de 32 bits
-            return 32;
-        } else if (operand.matches(REGSEG)) {
-            return 16;
-        }
-        return 0;
-    }
-
-    private int getRegisterSize(String register) {
-        return switch (register.toUpperCase()) {
-            case "AH", "AL", "BH", "BL", "CH", "CL", "DH", "DL" -> 8;
-            case "AX", "BX", "CX", "DX", "SI", "DI", "BP", "SP" -> 16;
-            case "EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "EBP", "ESP" -> 32;
-            default -> 0;
-        };
     }
 }
