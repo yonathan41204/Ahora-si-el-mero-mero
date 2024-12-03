@@ -7,7 +7,7 @@ public class Identify {
     private static final List<String> PALABRAS_RESERVADAS = List.of("FLAT", "STDCALL", "4096", "EXITPROCESS", "PROTO",
             "DWEXITCODE", "MAIN", "PROC", "INVOKE", "EXITPROCESS", "ENDP", "END", "?");
     private static final List<String> TIPOS_DATOS = List.of("BYTE", "SBYTE", "WORD", "SWORD", "DWORD", "SDWORD",
-            "FWORD", "QWORD", "TBYTE", "REAL4", "REAL8", "REAL10");
+            "FWORD", "QWORD", "TBYTE", "REAL4", "REAL8", "REAL1");
     private static final List<String> REGISTROS = List.of("EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "ESP", "EBP", "AX",
             "BX", "CX", "DX", "SI", "DI", "SP", "BP");
     private static final List<String> NEMONICOS = List.of("CLD", "CLI", "NOP", "POPA", "AAD", "AAM", "MUL", "INC",
