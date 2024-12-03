@@ -6,13 +6,11 @@ import java.util.regex.Pattern;
 
 public class DataSegmentAnalyzer {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(
-        "^\\s*\\w+\\s+(DB|DW|DD|DQ|DT|DF|DP|DQWORD|REAL4|REAL8|REAL10|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)\\s+.*",
-        Pattern.CASE_INSENSITIVE
-    );
+            "^\\s*\\w+\\s+(DB|DW|DD|DQ|DT|DF|DP|DQWORD|REAL4|REAL8|REAL10|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)\\s+.*",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern DIRECTIVE_PATTERN = Pattern.compile(
-        "^(DB|DW|DD|DQ|DT|DF|DP|DQWORD|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)$",
-        Pattern.CASE_INSENSITIVE
-    );
+            "^(DB|DW|DD|DQ|DT|DF|DP|DQWORD|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)$",
+            Pattern.CASE_INSENSITIVE);
     private final List<Symbol> symbolTable = new ArrayList<>();
     private int currentAddress = 0x0250; // Dirección inicial en hexadecimal
 
@@ -25,8 +23,10 @@ public class DataSegmentAnalyzer {
         for (String line : lines) {
             line = line.trim();
 
+            // Identificar el inicio de segmentos
             if (line.equalsIgnoreCase(".data segment") || line.equalsIgnoreCase(".data")) {
                 inDataSegment = true;
+                inStackSegment = false;
                 analysisResults.add(new String[] { line, "correcta", "" });
                 continue;
             } else if (line.equalsIgnoreCase(".stack segment") || line.equalsIgnoreCase(".stack")) {
@@ -47,24 +47,30 @@ public class DataSegmentAnalyzer {
                 continue;
             }
 
+            // Analizar líneas dentro de segmentos
             if (inDataSegment) {
                 if (line.isEmpty() || line.startsWith(";")) {
                     continue;
                 }
 
-                String[] result = analyzeLine(line);
+                String[] result = analyzeDataLine(line);
                 analysisResults.add(result);
                 if (result[1].equals("correcta")) {
                     addSymbolToTable(line, result[2]);
                 }
             } else if (inStackSegment) {
-                analysisResults.add(new String[] { line, "correcta", "" });
+                if (line.isEmpty() || line.startsWith(";")) {
+                    continue;
+                }
+
+                String[] result = analyzeStackLine(line);
+                analysisResults.add(result);
             }
         }
         return analysisResults;
     }
 
-    private String[] analyzeLine(String line) {
+    private String[] analyzeDataLine(String line) {
         String[] parts = line.split("\\s+");
         if (parts.length >= 3 && isValidDataLine(line) && !isDirective(parts[2])) {
             String address = String.format("%04XH", currentAddress);
@@ -115,9 +121,19 @@ public class DataSegmentAnalyzer {
             case "DT", "TBYTE" -> "80 bits / TBYTE";
             case "SBYTE" -> "8 bits / SIGNED BYTE";
             case "SWORD" -> "16 bits / SIGNED WORD";
-            case "SDOUBLE" -> "32 bits / SIGNED DOUBLE";
+            case "SDWORD" -> "32 bits / SIGNED DWORD";
             default -> "desconocido";
         };
+    }
+
+    private String[] analyzeStackLine(String line) {
+        // Patrón para validar `dw constante DUP(valor)`
+        Pattern stackPattern = Pattern.compile("^\\s*dw\\s+\\d+\\s+dup\\(\\s*(-?\\d+)\\s*\\)\\s*$", Pattern.CASE_INSENSITIVE);
+        if (stackPattern.matcher(line).matches()) {
+            return new String[] { line, "correcta", "" };
+        } else {
+            return new String[] { line, "incorrecta", "Error en la sintaxis" };
+        }
     }
 
     public List<Symbol> getSymbolTable() {
