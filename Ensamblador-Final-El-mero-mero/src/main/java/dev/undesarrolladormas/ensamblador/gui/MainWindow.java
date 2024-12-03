@@ -187,7 +187,7 @@ public class MainWindow extends JFrame {
         symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño", "Direccion"}, 10);
         this.add(symbolTablePagination.getPanel(), gbc);
     }
-    /**
+    /*
      * Clase interna para manejar la paginación de tablas.
      */
     private static class PaginatedTable {
