@@ -11,13 +11,13 @@ public class IdentificadorInstrucciones {
 
     public void identificador(String texto, DefaultTableModel modelo) {
         programCounter = 0x0250; // Reiniciar el contador del programa al analizar una nueva página
-    
+
         // Dividir el texto en líneas
         String[] lineas = texto.split("\\r?\\n");
-    
+
         for (String linea : lineas) {
             linea = linea.trim();
-    
+
             // Ignorar líneas con "Error" después de un guion
             if (linea.contains("-")) {
                 if (linea.contains("Error")) {
@@ -26,16 +26,16 @@ public class IdentificadorInstrucciones {
                     linea = linea.split("-", 2)[0].trim(); // Eliminar texto desde el guion
                 }
             }
-    
+
             // Analizar la línea para identificar instrucciones
             analizarInstruccion(linea, modelo);
         }
     }
-    
+
     private void analizarInstruccion(String linea, DefaultTableModel modelo) {
         Pattern patron = Pattern.compile("^(\\w+)?\\s*(db|dw|dd)\\s*(.*)$", Pattern.CASE_INSENSITIVE);
         Matcher matcher = patron.matcher(linea);
-    
+
         if (matcher.find()) {
             String tipo = matcher.group(2).toLowerCase();
             String valor = matcher.group(3);
@@ -56,12 +56,12 @@ public class IdentificadorInstrucciones {
 
             // Si no se encontró una fila existente, agregar una nueva
             if (!filaActualizada) {
-                modelo.addRow(new Object[]{
-                    matcher.group(1) != null ? matcher.group(1) : "anónimo", // Simbolo
-                    "variable", // Tipo
-                    valor, // Valor
-                    tamano, // Tamaño
-                    String.format("%04X", programCounter) // Direccion
+                modelo.addRow(new Object[] {
+                        matcher.group(1) != null ? matcher.group(1) : "anónimo", // Simbolo
+                        "variable", // Tipo
+                        valor, // Valor
+                        tamano, // Tamaño
+                        String.format("%04X", programCounter) // Direccion
                 });
             }
 
@@ -69,7 +69,7 @@ public class IdentificadorInstrucciones {
             programCounter += tamano;
         }
     }
-    
+
     private int calcularTamano(String tipo, String valor) {
         int tamano = 0;
 
