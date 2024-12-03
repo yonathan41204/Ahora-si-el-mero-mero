@@ -20,6 +20,7 @@ public class MainWindow extends JFrame {
         this.setTitle("Ensamblador");
         this.setSize(1080, 720);
         this.setMinimumSize(new Dimension(800, 600));
+        this.setIconImage(new ImageIcon("Ahora-si-el-mero-mero\\Ensamblador-Final-El-mero-mero\\src\\main\\resources\\175181da-5df4-4711-a6e5-b389e6ea0082.jpg").getImage());
         this.init();
     }
 
