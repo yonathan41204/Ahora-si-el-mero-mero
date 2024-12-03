@@ -20,7 +20,7 @@ public class MainWindow extends JFrame {
         this.setTitle("Ensamblador");
         this.setSize(1080, 720);
         this.setMinimumSize(new Dimension(800, 600));
-        this.setIconImage(new ImageIcon("Ahora-si-el-mero-mero\\Ensamblador-Final-El-mero-mero\\src\\main\\resources\\175181da-5df4-4711-a6e5-b389e6ea0082.jpg").getImage());
+        this.setIconImage(new ImageIcon("Ensamblador-Final-El-mero-mero\\src\\main\\resources\\175181da-5df4-4711-a6e5-b389e6ea0082.jpg").getImage());
         this.init();
     }
 
@@ -34,11 +34,11 @@ public class MainWindow extends JFrame {
         JMenuBar bar = new JMenuBar();
         this.setJMenuBar(bar);
 
-        JMenu menu = new JMenu("File");
+        JMenu menu = new JMenu("Archivo");
         bar.add(menu);
 
         // * READ FILE
-        JMenuItem openItem = new JMenuItem("Open");
+        JMenuItem openItem = new JMenuItem("Abrir archivo");
         openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
         openItem.addActionListener(_ -> {
             textArea.setText(Files.getFile(this));
@@ -46,16 +46,16 @@ public class MainWindow extends JFrame {
         menu.add(openItem);
 
         // * SAVE FILE
-        JMenuItem saveItem = new JMenuItem("Save");
+        JMenuItem saveItem = new JMenuItem("Guardar");
         saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         saveItem.addActionListener(_ -> {
             Files.saveFile(this, textArea.getText());
         });
         menu.add(saveItem);
 
-        JMenu exec = new JMenu("Operations");
+        JMenu exec = new JMenu("Opciones");
         bar.add(exec);
-        JMenuItem listarItem = new JMenuItem("List");
+        JMenuItem listarItem = new JMenuItem("Lista");
 
         listarItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
         listarItem.addActionListener(_ -> {

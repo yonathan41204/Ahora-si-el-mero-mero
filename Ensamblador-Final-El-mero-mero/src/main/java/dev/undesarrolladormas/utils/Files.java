@@ -22,9 +22,9 @@ public class Files {
         if (lastDirectory != null) {
             fileChooser.setCurrentDirectory(new File(lastDirectory));
         }
-        fileChooser.setDialogTitle("Open file");
+        fileChooser.setDialogTitle("Abrir archivo");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("*Assembly Source File", "asm");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Ensamblador por max", "ens");
         fileChooser.setFileFilter(filter);
         fileChooser.setAcceptAllFileFilterUsed(false);
 
@@ -51,7 +51,7 @@ public class Files {
                 content.append(line).append("\n");
             }
         } catch (IOException ex) {
-            javax.swing.JOptionPane.showMessageDialog(frame, "Error reading file: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(frame, "Error al cargar: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
         return content.toString();
     }
@@ -65,9 +65,9 @@ public class Files {
         if (lastDirectory != null) {
             fileChooser.setCurrentDirectory(new File(lastDirectory));
         }
-        fileChooser.setDialogTitle("Save file");
+        fileChooser.setDialogTitle("Guardar archivo");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("*Assembly Source File", "asm");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Ensambaldor pro Max", "ens");
         fileChooser.setFileFilter(filter);
         fileChooser.setAcceptAllFileFilterUsed(false);
 
@@ -77,8 +77,8 @@ public class Files {
 
             // Ensure the filename has the correct extension
             String filename = file.toString();
-            if (!filename.endsWith(".asm")) {
-                filename += ".asm";
+            if (!filename.endsWith(".ens")) {
+                filename += ".ens";
             }
             file = new File(filename);
 
@@ -89,7 +89,7 @@ public class Files {
             try (java.io.FileWriter writer = new java.io.FileWriter(file)) {
                 writer.write(content);
             } catch (IOException ex) {
-                javax.swing.JOptionPane.showMessageDialog(frame, "Error saving file: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                javax.swing.JOptionPane.showMessageDialog(frame, "Error al abrir el archivo: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
         }
     }
