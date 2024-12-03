@@ -15,7 +15,7 @@ public class Main {
         EventQueue.invokeLater(() -> {
             Settings.getPreferences();
             MainWindow mainWindow = new MainWindow();
-         
+            mainWindow.setLocationRelativeTo(null);
             mainWindow.setVisible(true);
       
         });
