@@ -1,9 +1,5 @@
 package dev.undesarrolladormas.ensamblador;
 
-// José Eduardo Mercado Hernández 
-// Uriel Hernández Escobar
-// Hugo Romero García
-// Edson Elías Reza Garduño
 import java.awt.EventQueue;
 
 
