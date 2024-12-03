@@ -3,17 +3,18 @@ package dev.undesarrolladormas.ensamblador.gui;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-import dev.undesarrolladormas.ensamblador.funcs.IdentificadorInstrucciones;
+import dev.undesarrolladormas.ensamblador.funcs.CodeSegmentAnalyzer;
+import dev.undesarrolladormas.ensamblador.funcs.DataSegmentAnalyzer;
+import dev.undesarrolladormas.ensamblador.funcs.Identify;
 import dev.undesarrolladormas.utils.Files;
 
 public class MainWindow extends JFrame {
-
-    private JTextPane textArea;
-    private PaginatedTable symbolTablePagination;
-
     public MainWindow() {
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setTitle("Ensamblador");
@@ -22,6 +23,11 @@ public class MainWindow extends JFrame {
         this.setIconImage(new ImageIcon("Ensamblador-Final-El-mero-mero\\src\\main\\resources\\175181da-5df4-4711-a6e5-b389e6ea0082.jpg").getImage());
         this.init();
     }
+
+    private JTextPane textArea;
+    private PaginatedTable tokensTablePagination;
+    private PaginatedTable codificationTablePagination;
+    private PaginatedTable symbolTablePagination;
 
     private void init() {
         this.setLayout(new GridBagLayout());
@@ -49,32 +55,67 @@ public class MainWindow extends JFrame {
 
         JMenu exec = new JMenu("Opciones");
         bar.add(exec);
+        JMenuItem listarItem = new JMenuItem("Lista");
 
-        // Opción para actualizar direcciones
-        JMenuItem actualizarDireccionesItem = new JMenuItem("Actualizar Direcciones");
-        actualizarDireccionesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.CTRL_MASK));
-        actualizarDireccionesItem.addActionListener(_ -> {
-            try {
-                String assemblyCode = textArea.getText();
-                if (assemblyCode.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Por favor, ingrese el código para actualizar direcciones.");
-                    return;
-                }
+        listarItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+        listarItem.addActionListener(_ -> {
+            // Obtener el texto del área de texto
+            String assemblyCode = textArea.getText();
 
-                // Obtener el modelo de la tabla de símbolos
-                DefaultTableModel symbolTableModel = (DefaultTableModel) symbolTablePagination.table.getModel();
-
-                // Lógica para actualizar las direcciones usando IdentificadorInstrucciones
-                IdentificadorInstrucciones identificador = new IdentificadorInstrucciones();
-                identificador.actualizarDirecciones(assemblyCode, symbolTableModel);
-
-                JOptionPane.showMessageDialog(this, "Direcciones actualizadas correctamente.");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error al actualizar direcciones: " + ex.getMessage(),
-                        "Error", JOptionPane.ERROR_MESSAGE);
+            if (assemblyCode.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null,
+                        "El área de texto está vacía. Por favor ingresa código ensamblador.");
+                return;
             }
+
+            // Tokenizar y clasificar
+            String[] tokens = Identify.getTokens(assemblyCode);
+            String[][] tokensData = new String[tokens.length][2];
+            for (int i = 0; i < tokens.length; i++) {
+                tokensData[i][0] = tokens[i];
+                tokensData[i][1] = Identify.classifyToken(tokens[i]);
+            }
+
+            // Actualizar la tabla de tokens
+            tokensTablePagination.updateTable(tokensData);
+
+            // Analizar el segmento .DATA
+            DataSegmentAnalyzer dataAnalyzer = new DataSegmentAnalyzer();
+            List<String[]> dataResults = dataAnalyzer.analyze(assemblyCode);
+
+            // Analizar el segmento .CODE
+            CodeSegmentAnalyzer codeAnalyzer = new CodeSegmentAnalyzer(dataAnalyzer.getSymbolTable());
+            List<String[]> codeResults = codeAnalyzer.analyze(assemblyCode);
+
+            // Combinar resultados del análisis de código y datos
+            List<String[]> combinedResults = new ArrayList<>();
+            combinedResults.addAll(dataResults);
+            combinedResults.addAll(codeResults);
+
+            // Convertir los resultados combinados a un arreglo 2D
+            String[][] resultsArray = new String[combinedResults.size()][2];
+            for (int i = 0; i < combinedResults.size(); i++) {
+                resultsArray[i] = combinedResults.get(i);
+            }
+
+            // Actualizar la tabla de codificación con los resultados combinados
+            codificationTablePagination.updateTable(resultsArray);
+
+            // Preparar los datos para la tabla de símbolos
+            List<DataSegmentAnalyzer.Symbol> symbols = dataAnalyzer.getSymbolTable();
+            String[][] symbolData = new String[symbols.size()][4];
+            for (int i = 0; i < symbols.size(); i++) {
+                DataSegmentAnalyzer.Symbol symbol = symbols.get(i);
+                symbolData[i][0] = symbol.getName();
+                symbolData[i][1] = symbol.getType();
+                symbolData[i][2] = symbol.getValue();
+                symbolData[i][3] = String.valueOf(symbol.getSize());
+            }
+
+            // Actualizar la tabla de símbolos
+            symbolTablePagination.updateTable(symbolData);
         });
-        exec.add(actualizarDireccionesItem);
+        exec.add(listarItem);
 
         // --------------------------------
         GridBagConstraints gbc = new GridBagConstraints();
@@ -95,6 +136,28 @@ public class MainWindow extends JFrame {
         this.add(scrollPane, gbc);
 
         // --------------------------------
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 2;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        tokensTablePagination = new PaginatedTable(new String[] { "Palabra", "Tipo" }, 10);
+        this.add(tokensTablePagination.getPanel(), gbc);
+
+        // --------------------------------
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 2;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        codificationTablePagination = new PaginatedTable(new String[] { "CP","Línea", "Verificació" }, 10);
+        this.add(codificationTablePagination.getPanel(), gbc);
+
+        // --------------------------------
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -102,7 +165,7 @@ public class MainWindow extends JFrame {
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        symbolTablePagination = new PaginatedTable(new String[]{"Símbolo", "Tipo", "Valor", "Tamaño", "Dirección"}, 10);
+        symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño", "Direccion"}, 10);
         this.add(symbolTablePagination.getPanel(), gbc);
     }
 
