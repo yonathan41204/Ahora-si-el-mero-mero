@@ -24,7 +24,7 @@ public class Files {
         }
         fileChooser.setDialogTitle("Abrir archivo");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Ensamblador por max", "ens");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Ensamblador Pro Max", "ens");
         fileChooser.setFileFilter(filter);
         fileChooser.setAcceptAllFileFilterUsed(false);
 
