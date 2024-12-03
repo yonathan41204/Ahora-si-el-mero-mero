@@ -173,7 +173,7 @@ public class MainWindow extends JFrame {
         gbc.weightx = 2;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        codificationTablePagination = new PaginatedTable(new String[] { "CP","Línea", "Verificació" }, 10);
+        codificationTablePagination = new PaginatedTable(new String[] { "Línea", "Verificació","CP" }, 10);
         this.add(codificationTablePagination.getPanel(), gbc);
 
         // --------------------------------
@@ -187,7 +187,6 @@ public class MainWindow extends JFrame {
         symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño", "Direccion"}, 10);
         this.add(symbolTablePagination.getPanel(), gbc);
     }
-
     /**
      * Clase interna para manejar la paginación de tablas.
      */
