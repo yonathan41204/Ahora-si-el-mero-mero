@@ -1,12 +1,12 @@
 package dev.undesarrolladormas.ensamblador.funcs;
 
-import java.util.regex.*;
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.swing.table.DefaultTableModel;
 
 public class IdentificadorInstrucciones {
 
-    private DefaultTableModel modelo; // La tabla para mostrar resultados
     private int programCounter; // Contador del programa (inicia en 0250h)
 
     public void identificador(String texto, DefaultTableModel modelo) {
@@ -37,22 +37,34 @@ public class IdentificadorInstrucciones {
         Matcher matcher = patron.matcher(linea);
     
         if (matcher.find()) {
-            String simbolo = matcher.group(1) != null ? matcher.group(1) : "anónimo";
             String tipo = matcher.group(2).toLowerCase();
             String valor = matcher.group(3);
-    
+
             // Calcular tamaño en bytes
             int tamano = calcularTamano(tipo, valor);
-    
-            // Agregar el resultado a la tabla
-            modelo.addRow(new Object[]{
-                simbolo,
-                "variable",
-                valor,
-                tamano,
-                String.format("%04X", programCounter) // Mostrar el contador del programa
-            });
-    
+
+            // Buscar fila con el símbolo en la tabla
+            boolean filaActualizada = false;
+            for (int i = 0; i < modelo.getRowCount(); i++) {
+                String simbolo = (String) modelo.getValueAt(i, 0);
+                if (simbolo != null && simbolo.equals(matcher.group(1))) {
+                    modelo.setValueAt(String.format("%04X", programCounter), i, 4); // Actualizar columna 'Direccion'
+                    filaActualizada = true;
+                    break;
+                }
+            }
+
+            // Si no se encontró una fila existente, agregar una nueva
+            if (!filaActualizada) {
+                modelo.addRow(new Object[]{
+                    matcher.group(1) != null ? matcher.group(1) : "anónimo", // Simbolo
+                    "variable", // Tipo
+                    valor, // Valor
+                    tamano, // Tamaño
+                    String.format("%04X", programCounter) // Direccion
+                });
+            }
+
             // Actualizar el contador del programa
             programCounter += tamano;
         }
@@ -91,30 +103,6 @@ public class IdentificadorInstrucciones {
         return tamano;
     }
 
-    public void actualizarDirecciones(DefaultTableModel modelo) {
-        programCounter = 0x0250; // Reiniciar contador del programa
-    
-        // Iterar sobre cada fila existente en la tabla
-        for (int i = 0; i < modelo.getRowCount(); i++) {
-            // Calcular dirección en hexadecimal
-            String direccion = String.format("%04X", programCounter);
-    
-            // Actualizar la columna de dirección (suponiendo que es la última columna)
-            modelo.setValueAt(direccion, i, modelo.getColumnCount() - 1);
-    
-            // Obtener el tipo y valor de la fila actual para calcular el tamaño
-            String tipo = (String) modelo.getValueAt(i, 1); // Suponiendo que la columna 1 es el tipo
-            String valor = (String) modelo.getValueAt(i, 2); // Suponiendo que la columna 2 es el valor
-    
-            // Incrementar el contador del programa usando el tamaño calculado
-            int tamano = calcularTamano(tipo, valor);
-            programCounter += tamano;
-        }
-    }
-    
-
-    
-
     private int calcularDup(String valor) {
         // Patrón para extraer el número antes y dentro de DUP (e.g., 100 DUP(0))
         Pattern patron = Pattern.compile("(\\d+)\\s*dup\\((\\d+)\\)", Pattern.CASE_INSENSITIVE);
@@ -124,6 +112,6 @@ public class IdentificadorInstrucciones {
             int repeticiones = Integer.parseInt(matcher.group(1)); // Número antes de DUP
             return repeticiones;
         }
-        return 0; // Si no es válido, asumimos 0
+        return 0; // Si no es válido, asumimos 0
     }
 }

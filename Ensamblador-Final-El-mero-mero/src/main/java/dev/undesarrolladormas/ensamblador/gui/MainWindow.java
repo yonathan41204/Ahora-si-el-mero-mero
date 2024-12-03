@@ -1,12 +1,31 @@
 package dev.undesarrolladormas.ensamblador.gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
 
 import dev.undesarrolladormas.ensamblador.funcs.CodeSegmentAnalyzer;
@@ -154,7 +173,7 @@ public class MainWindow extends JFrame {
         gbc.weightx = 2;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        codificationTablePagination = new PaginatedTable(new String[] {"Línea", "Verificació" }, 10);
+        codificationTablePagination = new PaginatedTable(new String[] { "CP","Línea", "Verificació" }, 10);
         this.add(codificationTablePagination.getPanel(), gbc);
 
         // --------------------------------
