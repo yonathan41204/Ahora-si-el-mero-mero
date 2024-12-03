@@ -25,7 +25,6 @@ public class CodeSegmentAnalyzer {
             "add", "mov", "movzx", "or", "pop", "shr", "shl", "sub", "jmp", "jz", "main", "proc", "nop", "ends", ".data",
             ".code");
 
-    // Patrones de las instrucciones
     private final Pattern LD_PATTERN;
     private final Pattern CLI_PATTERN;
     private final Pattern NOP_PATTERN;
@@ -46,12 +45,11 @@ public class CodeSegmentAnalyzer {
     private final Pattern JP_PATTERN;
     private final Pattern JCXZ_PATTERN;
     private final Pattern JZ_PATTERN;
-    private final Pattern INT_PATTERN; // Nuevo patrón para la instrucción INT
+    private final Pattern INT_PATTERN;
 
-    private Set<String> declaredLabels;  // Para almacenar las etiquetas declaradas
+    private Set<String> declaredLabels;
 
     public CodeSegmentAnalyzer(List<Symbol> vars) {
-        // Instrucciones válidas
         LD_PATTERN = Pattern.compile("^LD\\s+" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "$", Pattern.CASE_INSENSITIVE);
         CLI_PATTERN = Pattern.compile("^CLI$", Pattern.CASE_INSENSITIVE);
         NOP_PATTERN = Pattern.compile("^NOP$", Pattern.CASE_INSENSITIVE);
@@ -65,14 +63,14 @@ public class CodeSegmentAnalyzer {
         TEST_PATTERN = Pattern.compile("^TEST\\s+" + REG8 + "|" + REG16 + "|" + REG32 + "|" + MEM + "$", Pattern.CASE_INSENSITIVE);
         RCL_PATTERN = Pattern.compile("^RCL\\s+" + REG8 + "|" + REG16 + "|" + REG32 + "$", Pattern.CASE_INSENSITIVE);
         XCHG_PATTERN = Pattern.compile("^XCHG\\s+" + REG8 + "|" + REG16 + "|" + REG32 + "$", Pattern.CASE_INSENSITIVE);
-        JB_PATTERN = Pattern.compile("^JB\\s+" + LABEL_PATTERN.pattern() + "$", Pattern.CASE_INSENSITIVE);
-        JE_PATTERN = Pattern.compile("^JE\\s+" + LABEL_PATTERN.pattern() + "$", Pattern.CASE_INSENSITIVE);
-        JNLE_PATTERN = Pattern.compile("^JNLE\\s+" + LABEL_PATTERN.pattern() + "$", Pattern.CASE_INSENSITIVE);
-        JNP_PATTERN = Pattern.compile("^JNP\\s+" + LABEL_PATTERN.pattern() + "$", Pattern.CASE_INSENSITIVE);
-        JP_PATTERN = Pattern.compile("^JP\\s+" + LABEL_PATTERN.pattern() + "$", Pattern.CASE_INSENSITIVE);
-        JCXZ_PATTERN = Pattern.compile("^JCXZ\\s+" + LABEL_PATTERN.pattern() + "$", Pattern.CASE_INSENSITIVE);
-        JZ_PATTERN = Pattern.compile("^JZ\\s+" + LABEL_PATTERN.pattern() + "$", Pattern.CASE_INSENSITIVE);
-        INT_PATTERN = Pattern.compile("^INT\\s+" + INM + "$", Pattern.CASE_INSENSITIVE); // Patrón para la instrucción INT
+        JB_PATTERN = Pattern.compile("^JB\\s+[a-zA-Z_][a-zA-Z0-9_]*$", Pattern.CASE_INSENSITIVE);
+        JE_PATTERN = Pattern.compile("^JE\\s+[a-zA-Z_][a-zA-Z0-9_]*$", Pattern.CASE_INSENSITIVE);
+        JNLE_PATTERN = Pattern.compile("^JNLE\\s+[a-zA-Z_][a-zA-Z0-9_]*$", Pattern.CASE_INSENSITIVE);
+        JNP_PATTERN = Pattern.compile("^JNP\\s+[a-zA-Z_][a-zA-Z0-9_]*$", Pattern.CASE_INSENSITIVE);
+        JP_PATTERN = Pattern.compile("^JP\\s+[a-zA-Z_][a-zA-Z0-9_]*$", Pattern.CASE_INSENSITIVE);
+        JCXZ_PATTERN = Pattern.compile("^JCXZ\\s+[a-zA-Z_][a-zA-Z0-9_]*$", Pattern.CASE_INSENSITIVE);
+        JZ_PATTERN = Pattern.compile("^JZ\\s+[a-zA-Z_][a-zA-Z0-9_]*$", Pattern.CASE_INSENSITIVE);
+        INT_PATTERN = Pattern.compile("^INT\\s+" + INM + "$", Pattern.CASE_INSENSITIVE);
 
         declaredLabels = new HashSet<>();
     }
@@ -85,16 +83,10 @@ public class CodeSegmentAnalyzer {
         for (String line : lines) {
             line = line.trim();
 
-            if (line.isEmpty()) {
+            if (line.isEmpty() || line.startsWith(";")) {
                 continue;
             }
 
-            // Skip full-line comments and empty lines
-            if (line.startsWith(";") || line.isEmpty()) {
-                continue;
-            }
-
-            // Remove inline comments
             if (line.contains(";")) {
                 line = line.split(";", 2)[0].trim();
             }
@@ -115,14 +107,13 @@ public class CodeSegmentAnalyzer {
             }
 
             if (inCodeSegment) {
-                // Validar etiquetas
                 if (line.endsWith(":")) {
                     if (LABEL_PATTERN.matcher(line).matches()) {
                         String label = line.substring(0, line.length() - 1);
                         if (RESERVED_WORDS.contains(label.toLowerCase())) {
                             analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
                         } else {
-                            declaredLabels.add(label);  // Guardamos la etiqueta declarada
+                            declaredLabels.add(label);
                             analysisResults.add(new String[] { line, "correcta" });
                         }
                     } else {
@@ -131,7 +122,6 @@ public class CodeSegmentAnalyzer {
                     continue;
                 }
 
-                // Validar las instrucciones permitidas
                 if (LD_PATTERN.matcher(line).matches() || CLI_PATTERN.matcher(line).matches() ||
                     NOP_PATTERN.matcher(line).matches() || POPA_PATTERN.matcher(line).matches() ||
                     AAD_PATTERN.matcher(line).matches() || AAM_PATTERN.matcher(line).matches() ||
@@ -142,37 +132,19 @@ public class CodeSegmentAnalyzer {
 
                     analysisResults.add(new String[] { line, "correcta" });
 
-                } else if (JB_PATTERN.matcher(line).matches()) {
-                    // Verificar si la etiqueta a la que se salta está declarada
-                    String label = extractLabelFromJump(line);
-                    if (!declaredLabels.contains(label)) {
-                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no declarada"});
-                    } else {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    }
+                } else if (JB_PATTERN.matcher(line).matches() || JE_PATTERN.matcher(line).matches() ||
+                           JNLE_PATTERN.matcher(line).matches() || JNP_PATTERN.matcher(line).matches() ||
+                           JP_PATTERN.matcher(line).matches() || JCXZ_PATTERN.matcher(line).matches() ||
+                           JZ_PATTERN.matcher(line).matches()) {
 
-                } else if (JE_PATTERN.matcher(line).matches()) {
-                    // Verificar si la etiqueta a la que se salta está declarada
                     String label = extractLabelFromJump(line);
                     if (!declaredLabels.contains(label)) {
-                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no declarada"});
-                    } else {
-                        analysisResults.add(new String[] { line, "correcta" });
-                    }
-
-                } else if (JNLE_PATTERN.matcher(line).matches() || JNP_PATTERN.matcher(line).matches() ||
-                        JP_PATTERN.matcher(line).matches() || JCXZ_PATTERN.matcher(line).matches() ||
-                        JZ_PATTERN.matcher(line).matches()) {
-                    // Verificar si la etiqueta a la que se salta está declarada
-                    String label = extractLabelFromJump(line);
-                    if (!declaredLabels.contains(label)) {
-                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no declarada"});
+                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no declarada" });
                     } else {
                         analysisResults.add(new String[] { line, "correcta" });
                     }
 
                 } else if (INT_PATTERN.matcher(line).matches()) {
-                    // Validar la instrucción INT
                     analysisResults.add(new String[] { line, "correcta" });
 
                 } else {
@@ -184,11 +156,10 @@ public class CodeSegmentAnalyzer {
         return analysisResults;
     }
 
-    // Método auxiliar para extraer la etiqueta de una instrucción de salto
     private String extractLabelFromJump(String line) {
-        Matcher matcher = Pattern.compile(LABEL_PATTERN.pattern()).matcher(line);
+        Matcher matcher = Pattern.compile("\\s+([a-zA-Z_][a-zA-Z0-9_]*)").matcher(line);
         if (matcher.find()) {
-            return matcher.group();
+            return matcher.group(1);
         }
         return "";
     }

@@ -76,6 +76,11 @@ public class DataSegmentAnalyzer {
             String name = parts[0];
             String value = parts[2]; // Captura el valor completo (puede ser una cadena o número)
     
+            // Validar longitud del nombre
+            if (name.length() > 10) {
+                return new String[] { line, "incorrecta", "Nombre menor de 10 caracteres" };
+            }
+    
             // Validar duplicado
             for (Symbol symbol : symbolTable) {
                 if (symbol.getName().equalsIgnoreCase(name)) {
