@@ -61,8 +61,10 @@ public class MainWindow extends JFrame {
                     return;
                 }
 
+                // Obtener el modelo de la tabla de símbolos
                 DefaultTableModel symbolTableModel = (DefaultTableModel) symbolTablePagination.table.getModel();
 
+                // Lógica para actualizar las direcciones usando IdentificadorInstrucciones
                 IdentificadorInstrucciones identificador = new IdentificadorInstrucciones();
                 identificador.actualizarDirecciones(assemblyCode, symbolTableModel);
 
