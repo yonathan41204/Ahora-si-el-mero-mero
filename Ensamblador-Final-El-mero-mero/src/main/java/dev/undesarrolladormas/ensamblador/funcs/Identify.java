@@ -7,7 +7,7 @@ public class Identify {
     // Define sets or lists for each type of token classification0
     private static final List<String> PALABRAS_RESERVADAS = List.of("FLAT", "STDCALL", "4096", "EXITPROCESS", "PROTO", "DWEXITCODE", "MAIN", "PROC", "INVOKE", "EXITPROCESS", "ENDP", "END", "?");
     private static final List<String> TIPOS_DATOS = List.of("BYTE","SBYTE","WORD","SWORD","DWORD","SDWORD", "FWORD", "QWORD", "TBYTE", "REAL4", "REAL8", "REAL10");
-    private static final List<String> NEMONICOS = List.of("MOV", "ADD","XCHG", "IN", "OUT", "XLAT", "LEA", "LDS", "LES", "LAHF", "SAHF", "PUSH", "POP");
+    private static final List<String> NEMONICOS = List.of("CLD", "CLI", "NOP", "POPA", "AAD", "AAM", "MUL", "INC", "IDIV", "SAR", "TEST", "RCL", "XCHG", "JB", "JE", "JNLE", "JNP", "JP", "JCXZ", "JZ");
     private static final List<String> REGISTROS = List.of("EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "ESP", "EBP","AX", "BX", "CX", "DX", "SI", "DI", "SP", "BP");
 
     // Function to tokenize and return tokens in the correct order
@@ -35,7 +35,7 @@ public class Identify {
         if (upperToken.startsWith(".")){
         return "Directiva";
     } else if (NEMONICOS.contains(upperToken)) {
-        return "Nemónico";
+        return "Instruccion";
     } else if (REGISTROS.contains(upperToken)) {
         return "Registro";
     } else if (TIPOS_DATOS.contains(upperToken)) {
