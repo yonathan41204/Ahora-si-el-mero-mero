@@ -6,13 +6,11 @@ import java.util.regex.Pattern;
 
 public class DataSegmentAnalyzer {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(
-        "^\\s*\\w+\\s+(DB|DW|DD|DQ|DT|DF|DP|DQWORD|REAL4|REAL8|REAL10|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)\\s+.*",
-        Pattern.CASE_INSENSITIVE
-    );
+            "^\\s*\\w+\\s+(DB|DW|DD|DQ|DT|DF|DP|DQWORD|REAL4|REAL8|REAL10|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)\\s+.*",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern DIRECTIVE_PATTERN = Pattern.compile(
-        "^(DB|DW|DD|DQ|DT|DF|DP|DQWORD|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)$",
-        Pattern.CASE_INSENSITIVE
-    );
+            "^(DB|DW|DD|DQ|DT|DF|DP|DQWORD|BYTE|SBYTE|WORD|SWORD|DWORD|SDWORD|FWORD|QWORD|TBYTE)$",
+            Pattern.CASE_INSENSITIVE);
     private final List<Symbol> symbolTable = new ArrayList<>();
     private int currentAddress = 0x0250; // Dirección inicial en hexadecimal
 
@@ -25,8 +23,10 @@ public class DataSegmentAnalyzer {
         for (String line : lines) {
             line = line.trim();
 
+            // Identificar el inicio de segmentos
             if (line.equalsIgnoreCase(".data segment") || line.equalsIgnoreCase(".data")) {
                 inDataSegment = true;
+                inStackSegment = false;
                 analysisResults.add(new String[] { line, "correcta", "" });
                 continue;
             } else if (line.equalsIgnoreCase(".stack segment") || line.equalsIgnoreCase(".stack")) {
@@ -47,34 +47,101 @@ public class DataSegmentAnalyzer {
                 continue;
             }
 
+            // Analizar líneas dentro de segmentos
             if (inDataSegment) {
                 if (line.isEmpty() || line.startsWith(";")) {
                     continue;
                 }
 
-                String[] result = analyzeLine(line);
+                String[] result = analyzeDataLine(line);
                 analysisResults.add(result);
                 if (result[1].equals("correcta")) {
                     addSymbolToTable(line, result[2]);
                 }
             } else if (inStackSegment) {
-                analysisResults.add(new String[] { line, "correcta", "" });
+                if (line.isEmpty() || line.startsWith(";")) {
+                    continue;
+                }
+
+                String[] result = analyzeStackLine(line);
+                analysisResults.add(result);
             }
         }
         return analysisResults;
     }
 
-    private String[] analyzeLine(String line) {
-        String[] parts = line.split("\\s+");
+    private String[] analyzeDataLine(String line) {
+        String[] parts = line.split("\\s+", 3); // Divide la línea en máximo 3 partes para preservar el valor
         if (parts.length >= 3 && isValidDataLine(line) && !isDirective(parts[2])) {
-            String address = String.format("%04XH", currentAddress);
-            int size = calculateSize(parts[1]);
-            currentAddress += size;
-            return new String[] { line, "correcta", address };
+            String name = parts[0];
+            String value = parts[2]; // Captura el valor completo (puede ser una cadena o número)
+    
+            // Validar longitud del nombre
+            if (name.length() > 10) {
+                return new String[] { line, "incorrecta", "Nombre menor de 10 caracteres" };
+            }
+    
+            // Validar duplicado
+            for (Symbol symbol : symbolTable) {
+                if (symbol.getName().equalsIgnoreCase(name)) {
+                    return new String[] { line, "incorrecta", "Nombre duplicado" };
+                }
+            }
+    
+            // Validar cadenas entre comillas simples o dobles
+            if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+                String address = String.format("%04XH", currentAddress);
+                int size = calculateSize(parts[1]);
+                currentAddress += size;
+                return new String[] { line, "correcta", address };
+            }
+    
+            // Validar valores binarios
+            if (value.toUpperCase().endsWith("B")) {
+                String binaryValue = value.substring(0, value.length() - 1); // Remover la 'B'
+                if (!binaryValue.matches("^[01]+$")) {
+                    return new String[] { line, "incorrecta", "Valor binario no válido" };
+                }
+                if (parts[1].equalsIgnoreCase("DB") && binaryValue.length() != 8) {
+                    return new String[] { line, "incorrecta", "DB requiere 8 bits" };
+                }
+                if (parts[1].equalsIgnoreCase("DW") && binaryValue.length() != 16) {
+                    return new String[] { line, "incorrecta", "DW requiere 16 bits" };
+                }
+                String address = String.format("%04XH", currentAddress);
+                int size = calculateSize(parts[1]);
+                currentAddress += size;
+                return new String[] { line, "correcta", address };
+            }
+    
+            // Validar valores hexadecimales
+            if (value.toUpperCase().endsWith("H")) {
+                String hexValue = value.substring(0, value.length() - 1); // Remover la 'H'
+                if (hexValue.matches("^[0-9A-Fa-f]+$")) {
+                    String address = String.format("%04XH", currentAddress);
+                    int size = calculateSize(parts[1]);
+                    currentAddress += size;
+                    return new String[] { line, "correcta", address };
+                } else {
+                    return new String[] { line, "incorrecta", "Valor hexadecimal no válido" };
+                }
+            }
+    
+            // Validar valores decimales
+            try {
+                Integer.parseInt(value); // Intentar parsear como número decimal
+                String address = String.format("%04XH", currentAddress);
+                int size = calculateSize(parts[1]);
+                currentAddress += size;
+                return new String[] { line, "correcta", address };
+            } catch (NumberFormatException e) {
+                return new String[] { line, "incorrecta", "Valor no válido" };
+            }
         } else {
-            return new String[] { line, "incorrecta", "" };
+            return new String[] { line, "incorrecta", "Error en la sintaxis" };
         }
     }
+    
 
     private boolean isValidDataLine(String line) {
         return VARIABLE_PATTERN.matcher(line).matches();
@@ -88,6 +155,16 @@ public class DataSegmentAnalyzer {
         String[] parts = line.split("\\s+");
         if (parts.length >= 3) {
             String name = parts[0];
+
+            // Verificar si el nombre ya existe en la tabla de símbolos
+            for (Symbol symbol : symbolTable) {
+                if (symbol.getName().equalsIgnoreCase(name)) {
+                    // Si el nombre existe, no lo agrega
+                    System.err.println("Error ya está definido.");
+                    return;
+                }
+            }
+
             String type = "variable";
             String value = parts[2];
             String size = getSizeFromDirective(parts[1]);
@@ -115,9 +192,20 @@ public class DataSegmentAnalyzer {
             case "DT", "TBYTE" -> "80 bits / TBYTE";
             case "SBYTE" -> "8 bits / SIGNED BYTE";
             case "SWORD" -> "16 bits / SIGNED WORD";
-            case "SDOUBLE" -> "32 bits / SIGNED DOUBLE";
+            case "SDWORD" -> "32 bits / SIGNED DWORD";
             default -> "desconocido";
         };
+    }
+
+    private String[] analyzeStackLine(String line) {
+        // Patrón para validar `dw constante DUP(valor)`
+        Pattern stackPattern = Pattern.compile("^\\s*dw\\s+\\d+\\s+dup\\(\\s*(-?\\d+)\\s*\\)\\s*$",
+                Pattern.CASE_INSENSITIVE);
+        if (stackPattern.matcher(line).matches()) {
+            return new String[] { line, "correcta", "" };
+        } else {
+            return new String[] { line, "incorrecta", "Error en la sintaxis" };
+        }
     }
 
     public List<Symbol> getSymbolTable() {
