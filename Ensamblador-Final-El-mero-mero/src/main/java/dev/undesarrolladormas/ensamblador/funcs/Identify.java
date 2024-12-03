@@ -49,11 +49,47 @@ public class Identify {
                 }
             }
 
-            // Tokenize the remaining line
-            String[] lineTokens = line.split("\\s+|,|:");
-            for (String token : lineTokens) {
-                if (!token.isEmpty()) {
-                    tokens.add(token);
+            // Tokenize the remaining line, preserving strings in quotes
+            int start = 0;
+            boolean inQuotes = false;
+            StringBuilder currentToken = new StringBuilder();
+            boolean validString = true;
+
+            for (int i = 0; i < line.length(); i++) {
+                char c = line.charAt(i);
+
+                if (c == '"' && (i == 0 || line.charAt(i - 1) != '\\')) { // Detect start or end of a string
+                    inQuotes = !inQuotes;
+                    currentToken.append(c);
+                } else if (inQuotes) {
+                    currentToken.append(c);
+                } else if (Character.isWhitespace(c) || c == ',' || c == ':') {
+                    if (currentToken.length() > 0) {
+                        tokens.add(currentToken.toString());
+                        currentToken.setLength(0);
+                    }
+                } else {
+                    currentToken.append(c);
+                }
+            }
+
+            // After processing, check if the string is valid (balanced quotes)
+            if (inQuotes) {
+                validString = false; // Incomplete string (missing quote)
+            }
+
+            // Add the last token, if any
+            if (currentToken.length() > 0) {
+                if (validString) {
+                    tokens.add(currentToken.toString());
+                } else {
+                    // If it's not a valid string, treat it as individual tokens
+                    String[] individualTokens = currentToken.toString().split("\\s+|,|:");
+                    for (String token : individualTokens) {
+                        if (!token.isEmpty()) {
+                            tokens.add(token);
+                        }
+                    }
                 }
             }
         }
@@ -66,7 +102,7 @@ public class Identify {
         String upperToken = token.toUpperCase();
 
         if (ELEMENTOS_COMPUESTOS.contains(upperToken)) {
-            return "Elemento Compuesto";
+            return "Pseudo Instrucción";
         } else if (upperToken.matches(".*DUP\\(.*\\)")) { // Detecta el formato dup(xxx)
             return "Elemento Compuesto";
         } else if (upperToken.equals("DB")) {
