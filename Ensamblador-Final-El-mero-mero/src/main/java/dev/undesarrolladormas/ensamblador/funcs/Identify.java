@@ -84,40 +84,38 @@ public class Identify {
 
     // Function to classify each token
     // Function to classify each token
-// Function to classify each token
-public static String classifyToken(String token) {
-    String upperToken = token.toUpperCase();
+    // Function to classify each token
+    public static String classifyToken(String token) {
+        String upperToken = token.toUpperCase();
 
-    if ((token.startsWith("\"") && token.endsWith("\"")) || (token.startsWith("'") && token.endsWith("'"))) {
-        // Detect strings in quotes (both single and double quotes)
-        return "Cadena";
-    } else if (ELEMENTOS_COMPUESTOS.stream().anyMatch(upperToken::equalsIgnoreCase)) {
-        return "Pseudoinstrucción";
-    } else if (upperToken.matches(".*DUP\\(.*\\)")) { // Detecta el formato dup(xxx)
-        return "Elemento Compuesto";
-    } else if (REGISTROS.contains(upperToken)) {
-        return "Registro";
-    } else if (TIPOS_DATOS.contains(upperToken)) {
-        return "Tipo de dato";
-    } else if (PALABRAS_RESERVADAS.contains(upperToken)) {
-        return "Pseudoinstrucción";
-    } else if (NEMONICOS.contains(upperToken)) {
-        return "Instrucción";
-    } else if (SIMBOLOS.contains(upperToken)) {
-        return "Símbolo";
-    } else if (upperToken.matches("[01]+B")) {
-        return "Constante Binaria";
-    } else if (upperToken.matches("[0-7]+O")) {
-        return "Constante Octal";
-    } else if (upperToken.matches("[0-9]+")) {
-        return "Constante Decimal";
-    } else if (upperToken.matches("[0-9A-F]+H")) {
-        return "Constante Hexadecimal";
-    } else {
-        return "Elemento desconocido";
+        if ((token.startsWith("\"") && token.endsWith("\"")) || (token.startsWith("'") && token.endsWith("'"))) {
+            // Detect strings in quotes (both single and double quotes)
+            return "Cadena";
+        } else if (ELEMENTOS_COMPUESTOS.stream().anyMatch(upperToken::equalsIgnoreCase)) {
+            return "Pseudoinstrucción";
+        } else if (upperToken.matches(".*DUP\\(.*\\)")) { // Detecta el formato dup(xxx)
+            return "Elemento Compuesto";
+        } else if (REGISTROS.contains(upperToken)) {
+            return "Registro";
+        } else if (TIPOS_DATOS.contains(upperToken)) {
+            return "Tipo de dato";
+        } else if (PALABRAS_RESERVADAS.contains(upperToken)) {
+            return "Pseudoinstrucción";
+        } else if (NEMONICOS.contains(upperToken)) {
+            return "Instrucción";
+        } else if (SIMBOLOS.contains(upperToken)) {
+            return "Símbolo";
+        } else if (upperToken.matches("[01]+B")) {
+            return "Constante Binaria";
+        } else if (upperToken.matches("[0-7]+O")) {
+            return "Constante Octal";
+        } else if (upperToken.matches("[0-9]+")) {
+            return "Constante Decimal";
+        } else if (upperToken.matches("[0-9A-F]+H")) {
+            return "Constante Hexadecimal";
+        } else {
+            return "Elemento desconocido";
+        }
     }
-}
-
-
 
 }
