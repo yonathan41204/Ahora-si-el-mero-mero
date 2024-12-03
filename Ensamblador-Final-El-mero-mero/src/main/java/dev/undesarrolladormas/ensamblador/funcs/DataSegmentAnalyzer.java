@@ -94,9 +94,9 @@ public class DataSegmentAnalyzer {
 
     private String getSizeFromDirective(String directive) {
         return switch (directive.toUpperCase()) {
-            case "DB", "BYTE" -> "8 bits / BYTE";
-            case "DW", "WORD" -> "16 bits / WORD";
-            case "DD", "DWORD" -> "32 bits / DWORD";
+            case "DB", "BYTE" -> "1 / BYTE";
+            case "DW", "WORD" -> "1  / WORD";
+            case "DD", "DWORD" -> "1  / DWORD";
             case "DQ", "QWORD" -> "64 bits / QWORD";
             case "DT", "TBYTE" -> "80 bits / TBYTE";
             case "SBYTE" -> "8 bits / SIGNED BYTE";

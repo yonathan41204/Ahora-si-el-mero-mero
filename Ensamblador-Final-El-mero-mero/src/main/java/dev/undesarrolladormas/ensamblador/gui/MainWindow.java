@@ -24,7 +24,8 @@ public class MainWindow extends JFrame {
         this.init();
     }
 
-    private JTextPane textArea;
+    // Reemplazamos JTextPane por PaginatedTextArea
+    private PaginatedTextArea paginatedTextArea;
     private PaginatedTable tokensTablePagination;
     private PaginatedTable codificationTablePagination;
     private PaginatedTable symbolTablePagination;
@@ -41,7 +42,10 @@ public class MainWindow extends JFrame {
         JMenuItem openItem = new JMenuItem("Abrir archivo");
         openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
         openItem.addActionListener(_ -> {
-            textArea.setText(Files.getFile(this));
+            String fileContent = Files.getFile(this);
+            if (fileContent != null) {
+                paginatedTextArea.setText(fileContent);
+            }
         });
         menu.add(openItem);
 
@@ -49,7 +53,7 @@ public class MainWindow extends JFrame {
         JMenuItem saveItem = new JMenuItem("Guardar");
         saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         saveItem.addActionListener(_ -> {
-            Files.saveFile(this, textArea.getText());
+            Files.saveFile(this, paginatedTextArea.toString());
         });
         menu.add(saveItem);
 
@@ -60,7 +64,7 @@ public class MainWindow extends JFrame {
         listarItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
         listarItem.addActionListener(_ -> {
             // Obtener el texto del área de texto
-            String assemblyCode = textArea.getText();
+            String assemblyCode = paginatedTextArea.toString();
 
             if (assemblyCode.trim().isEmpty()) {
                 JOptionPane.showMessageDialog(null,
@@ -120,6 +124,8 @@ public class MainWindow extends JFrame {
         // --------------------------------
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
+
+        // Configuración para el PaginatedTextArea
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -128,12 +134,8 @@ public class MainWindow extends JFrame {
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
-        textArea = new JTextPane();
-        textArea.setFont(new Font("Cascadia Code NF", Font.BOLD, 14));
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        this.add(scrollPane, gbc);
+        paginatedTextArea = new PaginatedTextArea(30); // 30 líneas por página
+        this.add(paginatedTextArea.getPanel(), gbc);
 
         // --------------------------------
         gbc.gridx = 1;
@@ -154,7 +156,7 @@ public class MainWindow extends JFrame {
         gbc.weightx = 2;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        codificationTablePagination = new PaginatedTable(new String[] { "CP","Línea", "Verificació" }, 10);
+        codificationTablePagination = new PaginatedTable(new String[] { "Línea", "Verificación" }, 10);
         this.add(codificationTablePagination.getPanel(), gbc);
 
         // --------------------------------
@@ -165,7 +167,7 @@ public class MainWindow extends JFrame {
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño", "Direccion"}, 10);
+        symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño" }, 10);
         this.add(symbolTablePagination.getPanel(), gbc);
     }
 
@@ -240,6 +242,99 @@ public class MainWindow extends JFrame {
             pageLabel.setText(String.format("Página %d/%d", currentPage + 1, totalPages));
             prevButton.setEnabled(currentPage > 0);
             nextButton.setEnabled(currentPage < totalPages - 1);
+        }
+    }
+
+    /**
+     * Clase interna para manejar la paginación del JTextArea.
+     */
+    private class PaginatedTextArea {
+        private final JTextArea textArea;
+        private final JPanel panel;
+        private final JLabel pageLabel;
+        private final JButton prevButton;
+        private final JButton nextButton;
+
+        private List<String> pages;
+        private int currentPage;
+        private final int linesPerPage;
+
+        public PaginatedTextArea(int linesPerPage) {
+            this.linesPerPage = linesPerPage;
+            this.pages = new ArrayList<>();
+            this.currentPage = 0;
+
+            textArea = new JTextArea();
+            textArea.setEditable(false);
+            textArea.setFont(new Font("Cascadia Code NF", Font.PLAIN, 14)); // Ajusta el tamaño de la fuente si lo deseas
+
+            prevButton = new JButton("Anterior");
+            nextButton = new JButton("Siguiente");
+            pageLabel = new JLabel("Página 1/1", SwingConstants.CENTER);
+
+            prevButton.addActionListener(e -> showPage(currentPage - 1));
+            nextButton.addActionListener(e -> showPage(currentPage + 1));
+
+            JPanel navigationPanel = new JPanel(new BorderLayout());
+            navigationPanel.add(prevButton, BorderLayout.WEST);
+            navigationPanel.add(pageLabel, BorderLayout.CENTER);
+            navigationPanel.add(nextButton, BorderLayout.EAST);
+
+            panel = new JPanel(new BorderLayout());
+            panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
+            panel.add(navigationPanel, BorderLayout.SOUTH);
+
+            updatePages("");
+        }
+
+        public JPanel getPanel() {
+            return panel;
+        }
+
+        public void setText(String text) {
+            updatePages(text);
+        }
+
+        private void updatePages(String text) {
+            pages = splitIntoPages(text);
+            currentPage = 0;
+            showPage(0);
+        }
+
+        private List<String> splitIntoPages(String text) {
+            List<String> result = new ArrayList<>();
+            String[] lines = text.split("\n");
+
+            StringBuilder page = new StringBuilder();
+            int lineCount = 0;
+            for (String line : lines) {
+                if (lineCount == linesPerPage) {
+                    result.add(page.toString());
+                    page.setLength(0); // Reiniciar StringBuilder
+                    lineCount = 0;
+                }
+                page.append(line).append("\n");
+                lineCount++;
+            }
+
+            // Añadir la última página si tiene contenido
+            if (page.length() > 0) {
+                result.add(page.toString());
+            }
+
+            return result;
+        }
+
+        private void showPage(int page) {
+            if (page < 0 || page >= pages.size())
+                return;
+
+            currentPage = page;
+            textArea.setText(pages.get(page));
+
+            pageLabel.setText(String.format("Página %d/%d", currentPage + 1, pages.size()));
+            prevButton.setEnabled(currentPage > 0);
+            nextButton.setEnabled(currentPage < pages.size() - 1);
         }
     }
 }

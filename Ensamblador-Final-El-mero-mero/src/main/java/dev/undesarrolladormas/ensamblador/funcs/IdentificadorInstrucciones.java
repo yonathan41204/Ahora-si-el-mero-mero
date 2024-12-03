@@ -91,28 +91,28 @@ public class IdentificadorInstrucciones {
         return tamano;
     }
 
-    public void actualizarDirecciones(String texto, DefaultTableModel modelo) {
+    public void actualizarDirecciones(DefaultTableModel modelo) {
         programCounter = 0x0250; // Reiniciar contador del programa
     
-        // Dividir el texto en líneas
-        String[] lineas = texto.split("\\r?\\n");
-    
-        for (String linea : lineas) {
-            linea = linea.trim();
-    
-            // Ignorar líneas vacías
-            if (linea.isEmpty()) continue;
-    
-            // Calcular dirección en hexadecimal para cada línea no vacía
+        // Iterar sobre cada fila existente en la tabla
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            // Calcular dirección en hexadecimal
             String direccion = String.format("%04X", programCounter);
     
-            // Agregar la dirección a la tabla
-            modelo.addRow(new Object[]{"", "", "", "", direccion});
+            // Actualizar la columna de dirección (suponiendo que es la última columna)
+            modelo.setValueAt(direccion, i, modelo.getColumnCount() - 1);
     
-            // Actualizar contador del programa (puedes personalizar según lógica específica)
-            programCounter += 1; // Ejemplo: incrementa de a 1 por cada línea
+            // Obtener el tipo y valor de la fila actual para calcular el tamaño
+            String tipo = (String) modelo.getValueAt(i, 1); // Suponiendo que la columna 1 es el tipo
+            String valor = (String) modelo.getValueAt(i, 2); // Suponiendo que la columna 2 es el valor
+    
+            // Incrementar el contador del programa usando el tamaño calculado
+            int tamano = calcularTamano(tipo, valor);
+            programCounter += tamano;
         }
     }
+    
+
     
 
     private int calcularDup(String valor) {
