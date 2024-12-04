@@ -10,7 +10,7 @@ import dev.undesarrolladormas.ensamblador.funcs.DataSegmentAnalyzer.Symbol;
 
 public class CodeSegmentAnalyzer {
 
-    private static final Pattern LABEL_PATTERN = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*:$");
+    private static final Pattern LABEL_PATTERN = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*:$", Pattern.CASE_INSENSITIVE);
     private static final List<String> RESERVED_WORDS = List.of(
             "add", "mov", "movzx", "or", "pop", "popa", "shr", "shl", "sub", "jmp", "jz", "main", "proc", "nop", "ends",
             ".data",
@@ -22,8 +22,12 @@ public class CodeSegmentAnalyzer {
     private final Pattern NOP_PATTERN;
     private final Pattern POPA_PATTERN;
     private final Pattern AAD_PATTERN; // Patrón para AAD
+    private final Pattern AAM_PATTERN; // Patrón para AAM
+    private final Pattern MUL_PATTERN; // Patrón para MUL
+    private final Pattern INC_PATTERN; // Patrón para INC
 
     private Set<String> declaredLabels; // Para almacenar las etiquetas declaradas
+    private Set<String> declaredVariables; // Para almacenar las variables declaradas en .data
 
     public CodeSegmentAnalyzer(List<Symbol> vars) {
         // Patrones de las instrucciones válidas
@@ -32,7 +36,19 @@ public class CodeSegmentAnalyzer {
         NOP_PATTERN = Pattern.compile("^NOP$", Pattern.CASE_INSENSITIVE); // Patrón para NOP
         POPA_PATTERN = Pattern.compile("^POPA$", Pattern.CASE_INSENSITIVE); // Patrón para POPA
         AAD_PATTERN = Pattern.compile("^AAD$", Pattern.CASE_INSENSITIVE); // Patrón para AAD
+        AAM_PATTERN = Pattern.compile("^AAM$", Pattern.CASE_INSENSITIVE); // Patrón para AAM
+        MUL_PATTERN = Pattern.compile("^MUL\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$", Pattern.CASE_INSENSITIVE);
+        INC_PATTERN = Pattern.compile("^INC\\s+([a-zA-Z_][a-zA-Z0-9_]*|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+|\\[[^\\]]+\\])$", Pattern.CASE_INSENSITIVE); // Patrón para INC
+
         declaredLabels = new HashSet<>();
+        declaredVariables = new HashSet<>();
+
+        // Si `vars` contiene las variables declaradas, las añadimos al conjunto
+        if (vars != null) {
+            for (Symbol var : vars) {
+                declaredVariables.add(var.getName().toLowerCase());
+            }
+        }
     }
 
     public List<String[]> analyze(String assemblyCode) {
@@ -73,8 +89,8 @@ public class CodeSegmentAnalyzer {
             if (inCodeSegment) {
                 if (line.endsWith(":")) {
                     if (LABEL_PATTERN.matcher(line).matches()) {
-                        String label = line.substring(0, line.length() - 1);
-                        if (RESERVED_WORDS.contains(label.toLowerCase())) {
+                        String label = line.substring(0, line.length() - 1).toLowerCase();
+                        if (RESERVED_WORDS.contains(label)) {
                             analysisResults.add(
                                     new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
                         } else {
@@ -92,8 +108,23 @@ public class CodeSegmentAnalyzer {
                     CLI_PATTERN.matcher(line).matches() || 
                     NOP_PATTERN.matcher(line).matches() || 
                     POPA_PATTERN.matcher(line).matches() || 
-                    AAD_PATTERN.matcher(line).matches()) { // Validación para AAD
+                    AAD_PATTERN.matcher(line).matches() || 
+                    AAM_PATTERN.matcher(line).matches()) {
                     analysisResults.add(new String[] { line, "correcta" });
+                } else if (line.toUpperCase().startsWith("MUL")) {
+                    String validation = validateMUL(line);
+                    if (validation.equals("correcta")) {
+                        analysisResults.add(new String[] { line, "correcta" });
+                    } else {
+                        analysisResults.add(new String[] { line, "incorrecta", validation });
+                    }
+                } else if (line.toUpperCase().startsWith("INC")) {
+                    String validation = validateINC(line);
+                    if (validation.equals("correcta")) {
+                        analysisResults.add(new String[] { line, "correcta" });
+                    } else {
+                        analysisResults.add(new String[] { line, "incorrecta", validation });
+                    }
                 } else {
                     analysisResults.add(new String[] { line, "incorrecta", "Error de sintaxis" });
                 }
@@ -101,5 +132,51 @@ public class CodeSegmentAnalyzer {
         }
 
         return analysisResults;
+    }
+
+    private String validateMUL(String line) {
+        if (!MUL_PATTERN.matcher(line).matches()) {
+            return "Error de sintaxis"; // Sintaxis básica de MUL incorrecta
+        }
+
+        // Extraer el operando y verificar si es una variable declarada
+        String[] parts = line.split("\\s+");
+        if (parts.length != 2) {
+            return "Error de sintaxis"; // Debe tener un solo operando
+        }
+
+        String operand = parts[1].toLowerCase();
+        if (operand.matches("al|ax|bx|cx|dx|si|di|bp|sp|\\[[^\\]]+\\]|[0-9]+")) {
+            return "correcta"; // Operando válido (registro, inmediato o memoria)
+        }
+
+        if (declaredVariables.contains(operand)) {
+            return "correcta"; // Operando es una variable declarada
+        }
+
+        return "Operando inválido"; // Operando no declarado o no permitido
+    }
+
+    private String validateINC(String line) {
+        if (!INC_PATTERN.matcher(line).matches()) {
+            return "Error de sintaxis"; // Sintaxis básica de INC incorrecta
+        }
+
+        // Extraer el operando y verificar si es una variable declarada
+        String[] parts = line.split("\\s+");
+        if (parts.length != 2) {
+            return "Error de sintaxis"; // Debe tener un solo operando
+        }
+
+        String operand = parts[1].toLowerCase();
+        if (operand.matches("al|ax|bx|cx|dx|si|di|bp|sp|\\[[^\\]]+\\]|[0-9]+")) {
+            return "correcta"; // Operando válido (registro, inmediato o memoria)
+        }
+
+        if (declaredVariables.contains(operand)) {
+            return "correcta"; // Operando es una variable declarada
+        }
+
+        return "Operando inválido"; // Operando no declarado o no permitido
     }
 }
