@@ -25,6 +25,7 @@ public class CodeSegmentAnalyzer {
     private final Pattern AAM_PATTERN; // Patrón para AAM
     private final Pattern MUL_PATTERN; // Patrón para MUL
     private final Pattern INC_PATTERN; // Patrón para INC
+    private final Pattern IDIV_PATTERN; // Patrón para IDIV
 
     private Set<String> declaredLabels; // Para almacenar las etiquetas declaradas
     private Set<String> declaredVariables; // Para almacenar las variables declaradas en .data
@@ -39,6 +40,7 @@ public class CodeSegmentAnalyzer {
         AAM_PATTERN = Pattern.compile("^AAM$", Pattern.CASE_INSENSITIVE); // Patrón para AAM
         MUL_PATTERN = Pattern.compile("^MUL\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$", Pattern.CASE_INSENSITIVE);
         INC_PATTERN = Pattern.compile("^INC\\s+([a-zA-Z_][a-zA-Z0-9_]*|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+|\\[[^\\]]+\\])$", Pattern.CASE_INSENSITIVE); // Patrón para INC
+        IDIV_PATTERN = Pattern.compile("^IDIV\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$", Pattern.CASE_INSENSITIVE); // Patrón para IDIV
 
         declaredLabels = new HashSet<>();
         declaredVariables = new HashSet<>();
@@ -125,6 +127,13 @@ public class CodeSegmentAnalyzer {
                     } else {
                         analysisResults.add(new String[] { line, "incorrecta", validation });
                     }
+                } else if (line.toUpperCase().startsWith("IDIV")) {
+                    String validation = validateIDIV(line);
+                    if (validation.equals("correcta")) {
+                        analysisResults.add(new String[] { line, "correcta" });
+                    } else {
+                        analysisResults.add(new String[] { line, "incorrecta", validation });
+                    }
                 } else {
                     analysisResults.add(new String[] { line, "incorrecta", "Error de sintaxis" });
                 }
@@ -170,7 +179,30 @@ public class CodeSegmentAnalyzer {
 
         String operand = parts[1].toLowerCase();
         if (operand.matches("al|ax|bx|cx|dx|si|di|bp|sp|\\[[^\\]]+\\]|[0-9]+")) {
-            return "correcta"; // Operando válido (registro, inmediato o memoria)
+            return "correcta"; // Operando válido
+        }
+
+        if (declaredVariables.contains(operand)) {
+            return "correcta"; // Operando es una variable declarada
+        }
+
+        return "Operando inválido"; // Operando no declarado o no permitido
+    }
+
+    private String validateIDIV(String line) {
+        if (!IDIV_PATTERN.matcher(line).matches()) {
+            return "Error de sintaxis"; // Sintaxis básica de IDIV incorrecta
+        }
+
+        // Extraer el operando y verificar si es una variable declarada
+        String[] parts = line.split("\\s+");
+        if (parts.length != 2) {
+            return "Error de sintaxis"; // Debe tener un solo operando
+        }
+
+        String operand = parts[1].toLowerCase();
+        if (operand.matches("al|ax|bx|cx|dx|si|di|bp|sp|\\[[^\\]]+\\]|[0-9]+")) {
+            return "correcta"; // Operando válido
         }
 
         if (declaredVariables.contains(operand)) {
