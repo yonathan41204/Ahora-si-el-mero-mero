@@ -29,6 +29,7 @@ public class CodeSegmentAnalyzer {
     private final Pattern SAR_PATTERN; // Patrón para SAR
     private final Pattern TEST_PATTERN;
     private final Pattern RCL_PATTERN;
+    private final Pattern XCHG_PATTERN;
 
     private Set<String> declaredLabels; // Para almacenar las etiquetas declaradas
     private Set<String> declaredVariables; // Para almacenar las variables declaradas en .data
@@ -58,6 +59,9 @@ public class CodeSegmentAnalyzer {
                 Pattern.CASE_INSENSITIVE);
         RCL_PATTERN = Pattern.compile(
                 "^RCL\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s*([0-9]+|CL)$",
+                Pattern.CASE_INSENSITIVE);
+        XCHG_PATTERN = Pattern.compile(
+                "^XCHG\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s*([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP)$",
                 Pattern.CASE_INSENSITIVE);
 
         declaredLabels = new HashSet<>();
@@ -173,7 +177,14 @@ public class CodeSegmentAnalyzer {
                     } else {
                         analysisResults.add(new String[] { line, "incorrecta", validation });
                     }
-                } else {
+                } else if (line.toUpperCase().startsWith("XCHG")) {
+                    String validation = validateXCHG(line);
+                    if (validation.equals("correcta")) {
+                        analysisResults.add(new String[] { line, "correcta" });
+                    } else {
+                        analysisResults.add(new String[] { line, "incorrecta", validation });
+                    }
+                }else {
                     analysisResults.add(new String[] { line, "incorrecta", "Error de sintaxis" });
                 }
             }
@@ -354,4 +365,52 @@ public class CodeSegmentAnalyzer {
 
         return "correcta"; // Todo está correcto
     }
+
+    private String validateXCHG(String line) {
+        if (!XCHG_PATTERN.matcher(line).matches()) {
+            return "Error de sintaxis"; // Sintaxis básica de XCHG incorrecta
+        }
+
+        // Dividir los operandos
+        String[] parts = line.split("\\s+", 2);
+        if (parts.length != 2 || !parts[1].contains(",")) {
+            return "Error de sintaxis"; // Debe tener dos operandos separados por coma
+        }
+
+        String[] operands = parts[1].split("\\s*,\\s*");
+        if (operands.length != 2) {
+            return "Error de sintaxis"; // Debe tener exactamente dos operandos
+        }
+
+        String operando1 = operands[0].toLowerCase();
+        String operando2 = operands[1].toLowerCase();
+
+        // Validar que ambos operandos sean registros, memoria o variables declaradas
+        boolean operando1EsMemoria = operando1.matches("\\[[^\\]]+\\]");
+        boolean operando2EsMemoria = operando2.matches("\\[[^\\]]+\\]");
+        boolean operando1EsRegistro = operando1.matches("al|ax|bx|cx|dx|si|di|bp|sp");
+        boolean operando2EsRegistro = operando2.matches("al|ax|bx|cx|dx|si|di|bp|sp");
+
+        // Operando 1 o 2 puede ser una variable declarada
+        boolean operando1EsVariable = declaredVariables.contains(operando1);
+        boolean operando2EsVariable = declaredVariables.contains(operando2);
+
+        if (!(operando1EsMemoria || operando1EsRegistro || operando1EsVariable)) {
+            return "Operando 1 inválido"; // Operando 1 no es válido
+        }
+
+        if (!(operando2EsMemoria || operando2EsRegistro || operando2EsVariable)) {
+            return "Operando 2 inválido"; // Operando 2 no es válido
+        }
+
+        // Ambos operandos no pueden ser memoria
+        if (operando1EsMemoria && operando2EsMemoria) {
+            return "Ambos operandos no pueden ser direcciones de memoria";
+        }
+
+        return "correcta"; // Todo está correcto
+    }
+
+    
+
 }
