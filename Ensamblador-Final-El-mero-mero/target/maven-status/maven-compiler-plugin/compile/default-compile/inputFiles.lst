@@ -1,10 +1,12 @@
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\funcs\CodeSegmentAnalyzer.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\funcs\DataSegmentAnalyzer.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\funcs\Identify.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\funcs\Simbolos.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\funcs\Tables.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\gui\MainWindow.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\Main.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\persistence\Settings.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\ensamblador\persistence\Theme.java
-C:\Users\edson\Desktop\Ensamblador\Ensamblador-Ed\src\main\java\dev\undesarrolladormas\utils\Files.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\funcs\CodeSegmentAnalyzer.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\funcs\DataSegmentAnalyzer.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\funcs\IdentificadorInstrucciones.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\funcs\Identify.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\funcs\PaginatedTableModel.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\funcs\Simbolos.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\funcs\Tables.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\gui\MainWindow.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\Main.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\persistence\Settings.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\ensamblador\persistence\Theme.java
+D:\Uni Ingenieria\Ingenieria Escuela\Ensambladores\Ahora-si-el-mero-mero\Ensamblador-Final-El-mero-mero\src\main\java\dev\undesarrolladormas\utils\Files.java

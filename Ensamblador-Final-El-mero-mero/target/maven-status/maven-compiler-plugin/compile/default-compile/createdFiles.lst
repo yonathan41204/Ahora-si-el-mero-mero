@@ -1,11 +1,12 @@
-dev\undesarrolladormas\ensamblador\gui\MainWindow.class
 dev\undesarrolladormas\ensamblador\funcs\DataSegmentAnalyzer.class
 dev\undesarrolladormas\ensamblador\funcs\Identify.class
 dev\undesarrolladormas\utils\Files.class
 dev\undesarrolladormas\ensamblador\funcs\CodeSegmentAnalyzer.class
 dev\undesarrolladormas\ensamblador\funcs\Tables.class
 dev\undesarrolladormas\ensamblador\Main.class
-dev\undesarrolladormas\ensamblador\persistence\Theme.class
-dev\undesarrolladormas\ensamblador\funcs\DataSegmentAnalyzer$Symbol.class
 dev\undesarrolladormas\ensamblador\funcs\Simbolos.class
 dev\undesarrolladormas\ensamblador\persistence\Settings.class
+dev\undesarrolladormas\ensamblador\gui\MainWindow.class
+dev\undesarrolladormas\ensamblador\gui\MainWindow$1.class
+dev\undesarrolladormas\ensamblador\persistence\Theme.class
+dev\undesarrolladormas\ensamblador\funcs\DataSegmentAnalyzer$Symbol.class
