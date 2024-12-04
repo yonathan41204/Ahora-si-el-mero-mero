@@ -30,6 +30,7 @@ public class CodeSegmentAnalyzer {
     private final Pattern TEST_PATTERN;
     private final Pattern RCL_PATTERN;
     private final Pattern XCHG_PATTERN;
+    private final Pattern JB_PATTERN;
 
     private Set<String> declaredLabels; // Para almacenar las etiquetas declaradas
     private Set<String> declaredVariables; // Para almacenar las variables declaradas en .data
@@ -63,7 +64,14 @@ public class CodeSegmentAnalyzer {
         XCHG_PATTERN = Pattern.compile(
                 "^XCHG\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s*([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP)$",
                 Pattern.CASE_INSENSITIVE);
+        JB_PATTERN = Pattern.compile(
+                    "^JB\\s+([a-zA-Z_][a-zA-Z0-9_]*)$",
+                    Pattern.CASE_INSENSITIVE
+                );
 
+
+
+                
         declaredLabels = new HashSet<>();
         declaredVariables = new HashSet<>();
 
@@ -126,6 +134,8 @@ public class CodeSegmentAnalyzer {
                     }
                     continue;
                 }
+
+                
 
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
@@ -410,7 +420,5 @@ public class CodeSegmentAnalyzer {
 
         return "correcta"; // Todo está correcto
     }
-
-    
 
 }
