@@ -75,19 +75,19 @@ public class DataSegmentAnalyzer {
         if (parts.length >= 3 && isValidDataLine(line) && !isDirective(parts[2])) {
             String name = parts[0];
             String value = parts[2]; // Captura el valor completo (puede ser una cadena o número)
-    
+
             // Validar longitud del nombre
             if (name.length() > 10) {
                 return new String[] { line, "incorrecta", "Nombre menor de 10 caracteres" };
             }
-    
+
             // Validar duplicado
             for (Symbol symbol : symbolTable) {
                 if (symbol.getName().equalsIgnoreCase(name)) {
                     return new String[] { line, "incorrecta", "Nombre duplicado" };
                 }
             }
-    
+
             // Validar cadenas entre comillas simples o dobles
             if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
                 String address = String.format("%04XH", currentAddress);
@@ -95,7 +95,7 @@ public class DataSegmentAnalyzer {
                 currentAddress += size;
                 return new String[] { line, "correcta", address };
             }
-    
+
             // Validar valores binarios
             if (value.toUpperCase().endsWith("B")) {
                 String binaryValue = value.substring(0, value.length() - 1); // Remover la 'B'
@@ -113,7 +113,7 @@ public class DataSegmentAnalyzer {
                 currentAddress += size;
                 return new String[] { line, "correcta", address };
             }
-    
+
             // Validar valores hexadecimales
             if (value.toUpperCase().endsWith("H")) {
                 String hexValue = value.substring(0, value.length() - 1); // Remover la 'H'
@@ -126,7 +126,7 @@ public class DataSegmentAnalyzer {
                     return new String[] { line, "incorrecta", "Valor hexadecimal no válido" };
                 }
             }
-    
+
             // Validar valores decimales
             try {
                 Integer.parseInt(value); // Intentar parsear como número decimal
@@ -141,7 +141,6 @@ public class DataSegmentAnalyzer {
             return new String[] { line, "incorrecta", "Error en la sintaxis" };
         }
     }
-    
 
     private boolean isValidDataLine(String line) {
         return VARIABLE_PATTERN.matcher(line).matches();
@@ -151,6 +150,7 @@ public class DataSegmentAnalyzer {
         return DIRECTIVE_PATTERN.matcher(value).matches();
     }
 
+    // Metodo para agregar a la tabla de simbolos creo we
     private void addSymbolToTable(String line, String address) {
         String[] parts = line.split("\\s+");
         if (parts.length >= 3) {
