@@ -155,23 +155,6 @@ public class CodeSegmentAnalyzer {
                     continue;
                 }
                 if (line.endsWith(":")) {
-<<<<<<< HEAD
-    if (LABEL_PATTERN.matcher(line).matches()) {
-        String label = line.substring(0, line.length() - 1).toLowerCase();
-        if (RESERVED_WORDS.contains(label)) {
-            analysisResults.add(
-                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
-        } else {
-            declaredLabels.add(label);
-            addLabelToSymbolTable(label); // Agregar la etiqueta al symbolTable
-            analysisResults.add(new String[] { line, "correcta" });
-        }
-    } else {
-        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
-    }
-    continue;
-}    
-=======
                     if (LABEL_PATTERN.matcher(line).matches()) {
                         String label = line.substring(0, line.length() - 1).toLowerCase();
                         if (RESERVED_WORDS.contains(label)) {
@@ -186,8 +169,6 @@ public class CodeSegmentAnalyzer {
                     }
                     continue;
                 }
-
->>>>>>> 57f2fa6d8993c1bbd633474c0f59cb4c6a5f61d0
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
                         CLI_PATTERN.matcher(line).matches() ||
@@ -471,25 +452,5 @@ public class CodeSegmentAnalyzer {
 
         return "correcta"; // Todo está correcto
     }
-<<<<<<< HEAD
-
-    private void addLabelToSymbolTable(String label) {
-    // Verificar si la etiqueta ya existe en la tabla de símbolos
-    for (Symbol symbol : symbolTable) {
-        if (symbol.getName().equalsIgnoreCase(label)) {
-            return; // Ya existe, no agregar
-        }
-    }
-
-    // Agregar la etiqueta a la tabla de símbolos
-    symbolTable.add(new Symbol(label, "Etiqueta", null, null, null));
-}
-    
-    public List<Symbol> getSymbolTable() {
-        return symbolTable;
-    }
 
 }
-=======
-}
->>>>>>> 57f2fa6d8993c1bbd633474c0f59cb4c6a5f61d0
