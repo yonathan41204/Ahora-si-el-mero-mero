@@ -192,7 +192,7 @@ symbolTablePagination.updateTable(symbolData);
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño","Direcccion"}, 10);
+        symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño"}, 10);
         this.add(symbolTablePagination.getPanel(), gbc);
 
         

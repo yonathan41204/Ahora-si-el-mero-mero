@@ -213,6 +213,7 @@ public class DataSegmentAnalyzer {
         // Patrón para validar `dw constante DUP(valor)`
         Pattern stackPattern = Pattern.compile("^\\s*dw\\s+\\d+\\s+dup\\(\\s*(-?\\d+)\\s*\\)\\s*$",
                 Pattern.CASE_INSENSITIVE);
+
         if (stackPattern.matcher(line).matches()) {
             String[] parts = line.split("\\s+"); // Dividimos la línea para capturar los valores
             try {
@@ -220,7 +221,7 @@ public class DataSegmentAnalyzer {
                 int repetitions = Integer.parseInt(parts[1]); // Número de repeticiones
                 int valueSize = 2; // Cada `dw` ocupa 2 bytes por valor
                 int size = repetitions * valueSize;
-
+    
                 String address = String.format("%04XH", currentAddress);
                 currentAddress += size; // Actualizamos el contador de programa
     
@@ -271,5 +272,7 @@ public class DataSegmentAnalyzer {
         public String getAddress() {
             return address;
         }
+
+        
     }
 }
