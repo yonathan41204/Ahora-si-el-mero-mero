@@ -10,7 +10,7 @@ import dev.undesarrolladormas.ensamblador.funcs.DataSegmentAnalyzer.Symbol;
 
 public class CodeSegmentAnalyzer {
 
-    private int currentAddress = 0x0205; // Dirección inicial del CP para el segmento de código
+    private int currentAddress = 0x0250; // Dirección inicial del CP para el segmento de código
 
     private static final Pattern LABEL_PATTERN = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*:$", Pattern.CASE_INSENSITIVE);
     private static final List<String> RESERVED_WORDS = List.of(
@@ -19,6 +19,7 @@ public class CodeSegmentAnalyzer {
             ".code");
 
     // Patrones de las instrucciones seleccionadas
+    private final Pattern INT_PATTERN = Pattern.compile("^INT\\s+[0-9A-Fa-f]+[Hh]$", Pattern.CASE_INSENSITIVE);
     private final Pattern CLD_PATTERN;
     private final Pattern CLI_PATTERN;
     private final Pattern NOP_PATTERN;
@@ -229,7 +230,9 @@ public class CodeSegmentAnalyzer {
                     } else {
                         analysisResults.add(new String[] { line, "incorrecta", validation });
                     }
-                } else {
+                } else if (INT_PATTERN.matcher(line).matches()) {
+                    analysisResults.add(new String[] { line, "correcta" });
+                } else  {
                     analysisResults.add(new String[] { line, "incorrecta", "Error de sintaxis" });
                 }
 
@@ -535,7 +538,6 @@ private int calculateInstructionSize(String line) {
         return 2; // JCXZ ocupa 2 bytes
     } else if (line.equalsIgnoreCase("JZ")) {
         return 2; // JZ ocupa 2 bytes
-
     // Instrucciones de 2-3 bytes (dependen de los operandos)
     } else if (line.toUpperCase().startsWith("MOV")) {
         return 3; // MOV típicamente ocupa 2-3 bytes (suponemos 3 como promedio)
@@ -588,7 +590,5 @@ private String[] analyzeCodeLine(String line) {
     // Si no es válida
     return new String[] { line, "incorrecta", "Error de sintaxis" };
 }
-
-
 
 }

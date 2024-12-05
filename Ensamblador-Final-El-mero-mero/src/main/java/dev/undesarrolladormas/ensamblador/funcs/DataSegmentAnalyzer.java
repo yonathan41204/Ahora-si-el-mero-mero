@@ -27,7 +27,7 @@ public class DataSegmentAnalyzer {
             if (line.equalsIgnoreCase(".data segment") || line.equalsIgnoreCase(".data")) {
                 inDataSegment = true;
                 inStackSegment = false;
-                currentAddress = 0x0205; // Reiniciar el contador de programa para el segmento de datos
+                currentAddress = 0x0250; // Reiniciar el contador de programa para el segmento de datos
                 analysisResults.add(new String[] { line, "correcta", "" });
                 continue;
             } else if (line.equalsIgnoreCase(".stack segment") || line.equalsIgnoreCase(".stack")) {
@@ -82,7 +82,7 @@ public class DataSegmentAnalyzer {
 
         // Validar longitud del nombre
         if (name.length() > 10) {
-            return new String[] { line, "incorrecta", "Nombre menor de 10 caracteres" };
+            return new String[] { line, "incorrecta", "Nombre mayor de 10 caracteres" };
         }
 
         // Validar duplicado
