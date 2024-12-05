@@ -128,7 +128,6 @@ public class CodeSegmentAnalyzer {
     }
     continue;
 }    
-
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
                         CLI_PATTERN.matcher(line).matches() ||
@@ -424,13 +423,9 @@ public class CodeSegmentAnalyzer {
     // Agregar la etiqueta a la tabla de símbolos
     symbolTable.add(new Symbol(label, "Etiqueta", null, null, null));
 }
-
-    
     
     public List<Symbol> getSymbolTable() {
         return symbolTable;
     }
-    
-    
 
 }
