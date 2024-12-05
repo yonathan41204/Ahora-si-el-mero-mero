@@ -155,6 +155,7 @@ public class CodeSegmentAnalyzer {
                     continue;
                 }
                 if (line.endsWith(":")) {
+<<<<<<< HEAD
     if (LABEL_PATTERN.matcher(line).matches()) {
         String label = line.substring(0, line.length() - 1).toLowerCase();
         if (RESERVED_WORDS.contains(label)) {
@@ -170,6 +171,22 @@ public class CodeSegmentAnalyzer {
     }
     continue;
 }    
+=======
+                    if (LABEL_PATTERN.matcher(line).matches()) {
+                        String label = line.substring(0, line.length() - 1).toLowerCase();
+                        if (RESERVED_WORDS.contains(label)) {
+                            analysisResults.add(
+                                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
+                        } else {
+                            declaredLabels.add(label);
+                            analysisResults.add(new String[] { line, "correcta" });
+                        }
+                    } else {
+                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
+                    }
+                    continue;
+                }
+>>>>>>> f91996f6247aa8a0754eafb4f7ad26a0754c3efd
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
                         CLI_PATTERN.matcher(line).matches() ||
@@ -453,7 +470,10 @@ public class CodeSegmentAnalyzer {
 
         return "correcta"; // Todo está correcto
     }
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> f91996f6247aa8a0754eafb4f7ad26a0754c3efd
 
 }
