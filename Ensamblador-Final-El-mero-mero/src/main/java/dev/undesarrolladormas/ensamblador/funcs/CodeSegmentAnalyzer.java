@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import dev.undesarrolladormas.ensamblador.funcs.DataSegmentAnalyzer.Symbol;
 
 public class CodeSegmentAnalyzer {
@@ -33,6 +32,8 @@ public class CodeSegmentAnalyzer {
 
     private Set<String> declaredLabels; // Para almacenar las etiquetas declaradas
     private Set<String> declaredVariables; // Para almacenar las variables declaradas en .data
+    private final List<Symbol> symbolTable = new ArrayList<>(); // Tabla de símbolos para etiquetas
+
 
     public CodeSegmentAnalyzer(List<Symbol> vars) {
         // Patrones de las instrucciones válidas
@@ -112,20 +113,24 @@ public class CodeSegmentAnalyzer {
 
             if (inCodeSegment) {
                 if (line.endsWith(":")) {
-                    if (LABEL_PATTERN.matcher(line).matches()) {
-                        String label = line.substring(0, line.length() - 1).toLowerCase();
-                        if (RESERVED_WORDS.contains(label)) {
-                            analysisResults.add(
-                                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
-                        } else {
-                            declaredLabels.add(label);
-                            analysisResults.add(new String[] { line, "correcta" });
-                        }
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
-                    }
-                    continue;
-                }
+    if (LABEL_PATTERN.matcher(line).matches()) {
+        String label = line.substring(0, line.length() - 1).toLowerCase();
+        if (RESERVED_WORDS.contains(label)) {
+            analysisResults.add(
+                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
+        } else {
+            declaredLabels.add(label);
+            addLabelToSymbolTable(label); // Agregar la etiqueta al symbolTable
+            analysisResults.add(new String[] { line, "correcta" });
+        }
+    } else {
+        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
+    }
+    continue;
+}
+
+
+                
 
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
@@ -411,6 +416,24 @@ public class CodeSegmentAnalyzer {
         return "correcta"; // Todo está correcto
     }
 
+    private void addLabelToSymbolTable(String label) {
+    // Verificar si la etiqueta ya existe en la tabla de símbolos
+    for (Symbol symbol : symbolTable) {
+        if (symbol.getName().equalsIgnoreCase(label)) {
+            return; // Ya existe, no agregar
+        }
+    }
+
+    // Agregar la etiqueta a la tabla de símbolos
+    symbolTable.add(new Symbol(label, "Etiqueta", null, null, null));
+}
+
+    
+    
+    public List<Symbol> getSymbolTable() {
+        return symbolTable;
+    }
+    
     
 
 }
