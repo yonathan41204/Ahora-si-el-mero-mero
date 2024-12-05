@@ -443,10 +443,13 @@ public class CodeSegmentAnalyzer {
         if (!(operando2EsMemoria || operando2EsRegistro || operando2EsVariable)) {
             return "Operando 2 inválido"; // Operando 2 no es válido
         }
+
         // Ambos operandos no pueden ser memoria
         if (operando1EsMemoria && operando2EsMemoria) {
             return "Ambos operandos no pueden ser direcciones de memoria";
         }
+
         return "correcta"; // Todo está correcto
     }
+
 }

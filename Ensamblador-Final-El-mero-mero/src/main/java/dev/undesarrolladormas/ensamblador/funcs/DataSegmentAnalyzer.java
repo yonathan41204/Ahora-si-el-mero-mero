@@ -220,7 +220,7 @@ public class DataSegmentAnalyzer {
                 int repetitions = Integer.parseInt(parts[1]); // Número de repeticiones
                 int valueSize = 2; // Cada `dw` ocupa 2 bytes por valor
                 int size = repetitions * valueSize;
-    
+
                 String address = String.format("%04XH", currentAddress);
                 currentAddress += size; // Actualizamos el contador de programa
     
@@ -271,7 +271,5 @@ public class DataSegmentAnalyzer {
         public String getAddress() {
             return address;
         }
-
-        
     }
 }
