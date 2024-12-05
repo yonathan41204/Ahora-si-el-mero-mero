@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+
 import dev.undesarrolladormas.ensamblador.funcs.DataSegmentAnalyzer.Symbol;
 
 public class CodeSegmentAnalyzer {
@@ -29,11 +30,18 @@ public class CodeSegmentAnalyzer {
     private final Pattern TEST_PATTERN;
     private final Pattern RCL_PATTERN;
     private final Pattern XCHG_PATTERN;
+    private final Pattern JB_PATTERN;
+    private final List<Pattern> JUMP_PATTERNS = List.of(
+            Pattern.compile("^JB\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^JE\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^JNLE\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^JNP\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^JP\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^JCXZ\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^JZ\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", Pattern.CASE_INSENSITIVE));
 
     private Set<String> declaredLabels; // Para almacenar las etiquetas declaradas
     private Set<String> declaredVariables; // Para almacenar las variables declaradas en .data
-    private final List<Symbol> symbolTable = new ArrayList<>(); // Tabla de símbolos para etiquetas
-
 
     public CodeSegmentAnalyzer(List<Symbol> vars) {
         // Patrones de las instrucciones válidas
@@ -53,22 +61,25 @@ public class CodeSegmentAnalyzer {
                 "^IDIV\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$",
                 Pattern.CASE_INSENSITIVE); // Patrón para IDIV
         SAR_PATTERN = Pattern.compile(
-                "^SAR\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|[0-9]+),\\s*([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+)$",
+                "^SAR\\s+([a-zA-Z_][a-zA-Z0-9_]|\\[[^\\]]+\\]|[0-9]+),\\s([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+)$",
                 Pattern.CASE_INSENSITIVE); // Patrón para SAR
         TEST_PATTERN = Pattern.compile(
-                "^TEST\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+),\\s*([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$",
+                "^TEST\\s+([a-zA-Z_][a-zA-Z0-9_]|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+),\\s([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$",
                 Pattern.CASE_INSENSITIVE);
         RCL_PATTERN = Pattern.compile(
-                "^RCL\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s*([0-9]+|CL)$",
+                "^RCL\\s+([a-zA-Z_][a-zA-Z0-9_]|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s([0-9]+|CL)$",
                 Pattern.CASE_INSENSITIVE);
         XCHG_PATTERN = Pattern.compile(
-                "^XCHG\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s*([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP)$",
+                "^XCHG\\s+([a-zA-Z_][a-zA-Z0-9_]|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP)$",
+                Pattern.CASE_INSENSITIVE);
+        JB_PATTERN = Pattern.compile(
+                "^JB\\s+([a-zA-Z_][a-zA-Z0-9_]*)$",
                 Pattern.CASE_INSENSITIVE);
 
         declaredLabels = new HashSet<>();
         declaredVariables = new HashSet<>();
 
-        // Si `vars` contiene las variables declaradas, las añadimos al conjunto
+        // Si vars contiene las variables declaradas, las añadimos al conjunto
         if (vars != null) {
             for (Symbol var : vars) {
                 declaredVariables.add(var.getName().toLowerCase());
@@ -112,7 +123,39 @@ public class CodeSegmentAnalyzer {
             }
 
             if (inCodeSegment) {
+                // Verificar si es una instrucción de salto
+                boolean isJumpInstruction = false;
+                for (Pattern jumpPattern : JUMP_PATTERNS) {
+                    var matcher = jumpPattern.matcher(line);
+                    if (matcher.matches()) {
+                        isJumpInstruction = true;
+                        String targetLabel = matcher.group(1).toLowerCase();
+                        if (declaredLabels.contains(targetLabel)) {
+                            analysisResults.add(new String[] { line, "correcta" });
+                        } else {
+                            // Verificar si la etiqueta será declarada más adelante
+                            boolean labelDeclaredLater = false;
+                            for (String remainingLine : lines) {
+                                if (remainingLine.trim().toLowerCase().equals(targetLabel + ":")) {
+                                    labelDeclaredLater = true;
+                                    break;
+                                }
+                            }
+                            if (labelDeclaredLater) {
+                                analysisResults.add(new String[] { line, "correcta" });
+                            } else {
+                                analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no declarada" });
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                if (isJumpInstruction) {
+                    continue;
+                }
                 if (line.endsWith(":")) {
+<<<<<<< HEAD
     if (LABEL_PATTERN.matcher(line).matches()) {
         String label = line.substring(0, line.length() - 1).toLowerCase();
         if (RESERVED_WORDS.contains(label)) {
@@ -128,6 +171,23 @@ public class CodeSegmentAnalyzer {
     }
     continue;
 }    
+=======
+                    if (LABEL_PATTERN.matcher(line).matches()) {
+                        String label = line.substring(0, line.length() - 1).toLowerCase();
+                        if (RESERVED_WORDS.contains(label)) {
+                            analysisResults.add(
+                                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
+                        } else {
+                            declaredLabels.add(label);
+                            analysisResults.add(new String[] { line, "correcta" });
+                        }
+                    } else {
+                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
+                    }
+                    continue;
+                }
+
+>>>>>>> 57f2fa6d8993c1bbd633474c0f59cb4c6a5f61d0
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
                         CLI_PATTERN.matcher(line).matches() ||
@@ -185,7 +245,7 @@ public class CodeSegmentAnalyzer {
                     } else {
                         analysisResults.add(new String[] { line, "incorrecta", validation });
                     }
-                }else {
+                } else {
                     analysisResults.add(new String[] { line, "incorrecta", "Error de sintaxis" });
                 }
             }
@@ -411,6 +471,7 @@ public class CodeSegmentAnalyzer {
 
         return "correcta"; // Todo está correcto
     }
+<<<<<<< HEAD
 
     private void addLabelToSymbolTable(String label) {
     // Verificar si la etiqueta ya existe en la tabla de símbolos
@@ -429,3 +490,6 @@ public class CodeSegmentAnalyzer {
     }
 
 }
+=======
+}
+>>>>>>> 57f2fa6d8993c1bbd633474c0f59cb4c6a5f61d0
