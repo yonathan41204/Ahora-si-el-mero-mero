@@ -14,6 +14,8 @@ public class CodeSegmentAnalyzer {
             "add", "mov", "movzx", "or", "pop", "popa", "shr", "shl", "sub", "jmp", "jz", "main", "proc", "nop", "ends",
             ".data",
             ".code");
+    private final Pattern JUMP_PATTERN;
+    private static final List<String> JUMP_INSTRUCTIONS = List.of("jmp", "jz", "jnz", "je", "jne");
 
     // Patrones de las instrucciones seleccionadas
     private final Pattern CLD_PATTERN;
@@ -64,6 +66,8 @@ public class CodeSegmentAnalyzer {
         XCHG_PATTERN = Pattern.compile(
                 "^XCHG\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s*([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP)$",
                 Pattern.CASE_INSENSITIVE);
+        JUMP_PATTERN = Pattern.compile("^(jmp|jz|jnz|je|jne)\\s+([a-zA-Z_][a-zA-Z0-9_]*)$", 
+                Pattern.CASE_INSENSITIVE);
 
         declaredLabels = new HashSet<>();
         declaredVariables = new HashSet<>();
@@ -113,6 +117,7 @@ public class CodeSegmentAnalyzer {
 
             if (inCodeSegment) {
                 if (line.endsWith(":")) {
+<<<<<<< HEAD
     if (LABEL_PATTERN.matcher(line).matches()) {
         String label = line.substring(0, line.length() - 1).toLowerCase();
         if (RESERVED_WORDS.contains(label)) {
@@ -131,6 +136,31 @@ public class CodeSegmentAnalyzer {
 
 
                 
+=======
+                    if (LABEL_PATTERN.matcher(line).matches()) {
+                        String label = line.substring(0, line.length() - 1).toLowerCase();
+                        if (JUMP_PATTERN.matcher(line).matches()) {
+                         String[] parts = line.split("\\s+");
+                        String label = parts[1].toLowerCase();
+                         referencedLabels.add(label);
+                        if (RESERVED_WORDS.contains(label)) {
+                            analysisResults.add(
+                                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
+                            if (!declaredLabels.contains(label)) {
+                                    analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no declarada" });
+                        } else {
+                            declaredLabels.add(label);
+                            analysisResults.add(new String[] { line, "correcta" });
+                        }
+                    } else {
+                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
+                    }
+                    } else {
+                        analysisResults.add(new String[] { line, "correcta" });
+                    }
+                    continue;
+                }
+>>>>>>> 8ee7f0c6a30c637d30a9c85ce67bad2383177c12
 
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||

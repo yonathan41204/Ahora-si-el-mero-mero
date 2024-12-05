@@ -26,6 +26,7 @@ public class Identify {
     public static String[] getTokens(String str) {
         List<String> lines = List.of(str.split("\n"));
         List<String> tokens = new ArrayList<>();
+        List<String> etiquetas = new ArrayList<>();  // Para almacenar las etiquetas declaradas
 
         for (String line : lines) {
             line = line.trim();
@@ -38,6 +39,14 @@ public class Identify {
             // Remove inline comments
             if (line.contains(";")) {
                 line = line.split(";", 2)[0].trim();
+            }
+
+            // Detect etiquetas (etiquetas terminan con ":")
+            if (line.matches("[A-Za-z0-9_]+:")) {  // Esto detecta cualquier cadena seguida de ":"
+                String etiqueta = line.split(":")[0].trim();  // Eliminar los dos puntos y obtener la etiqueta
+                etiquetas.add(etiqueta);  // Añadir la etiqueta a la lista de etiquetas
+                tokens.add(etiqueta);  // También agregarla como token
+                continue;  // Saltar a la siguiente línea después de procesar la etiqueta
             }
 
             // Check for exact matches of compound elements
@@ -79,17 +88,17 @@ public class Identify {
             }
         }
 
+        // Ahora las etiquetas están en la lista "etiquetas"
+        // Se puede realizar una validación de etiquetas a medida que procesas las instrucciones de salto.
+
         return tokens.toArray(String[]::new);
     }
 
-    // Function to classify each token
-    // Function to classify each token
     // Function to classify each token
     public static String classifyToken(String token) {
         String upperToken = token.toUpperCase();
 
         if ((token.startsWith("\"") && token.endsWith("\"")) || (token.startsWith("'") && token.endsWith("'"))) {
-            // Detect strings in quotes (both single and double quotes)
             return "Cadena";
         } else if (ELEMENTOS_COMPUESTOS.stream().anyMatch(upperToken::equalsIgnoreCase)) {
             return "Pseudoinstrucción";
@@ -113,9 +122,11 @@ public class Identify {
             return "Constante Decimal";
         } else if (upperToken.matches("[0-9A-F]+H")) {
             return "Constante Hexadecimal";
+        } else if (upperToken.matches("[A-Za-z0-9_]+:")) { // Etiquetas en formato "nombre:"
+            return "Etiqueta";
         } else {
             return "Elemento desconocido";
         }
     }
-
 }
+
