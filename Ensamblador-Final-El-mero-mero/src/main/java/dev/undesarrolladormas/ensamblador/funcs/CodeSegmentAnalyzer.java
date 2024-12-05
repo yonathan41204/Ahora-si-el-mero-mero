@@ -10,6 +10,8 @@ import dev.undesarrolladormas.ensamblador.funcs.DataSegmentAnalyzer.Symbol;
 
 public class CodeSegmentAnalyzer {
 
+    private int currentAddress = 0x0205; // Dirección inicial del CP para el segmento de código
+
     private static final Pattern LABEL_PATTERN = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*:$", Pattern.CASE_INSENSITIVE);
     private static final List<String> RESERVED_WORDS = List.of(
             "add", "mov", "movzx", "or", "pop", "popa", "shr", "shl", "sub", "jmp", "jz", "main", "proc", "nop", "ends",
@@ -155,38 +157,21 @@ public class CodeSegmentAnalyzer {
                     continue;
                 }
                 if (line.endsWith(":")) {
-<<<<<<< HEAD
-    if (LABEL_PATTERN.matcher(line).matches()) {
-        String label = line.substring(0, line.length() - 1).toLowerCase();
-        if (RESERVED_WORDS.contains(label)) {
+                    if (LABEL_PATTERN.matcher(line).matches()) {
+                      String label = line.substring(0, line.length() - 1).toLowerCase();
+                    if (RESERVED_WORDS.contains(label)) {
             analysisResults.add(
                     new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
-        } else {
-            declaredLabels.add(label);
+                  } else {
+                      declaredLabels.add(label);
            
             analysisResults.add(new String[] { line, "correcta" });
-        }
+                 }
     } else {
         analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
     }
     continue;
 }    
-=======
-                    if (LABEL_PATTERN.matcher(line).matches()) {
-                        String label = line.substring(0, line.length() - 1).toLowerCase();
-                        if (RESERVED_WORDS.contains(label)) {
-                            analysisResults.add(
-                                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
-                        } else {
-                            declaredLabels.add(label);
-                            analysisResults.add(new String[] { line, "correcta" });
-                        }
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
-                    }
-                    continue;
-                }
->>>>>>> f91996f6247aa8a0754eafb4f7ad26a0754c3efd
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
                         CLI_PATTERN.matcher(line).matches() ||
@@ -247,6 +232,9 @@ public class CodeSegmentAnalyzer {
                 } else {
                     analysisResults.add(new String[] { line, "incorrecta", "Error de sintaxis" });
                 }
+
+                String[] result = analyzeCodeLine(line);
+                analysisResults.add(result);
             }
         }
 
@@ -470,10 +458,90 @@ public class CodeSegmentAnalyzer {
 
         return "correcta"; // Todo está correcto
     }
-<<<<<<< HEAD
 
 
-=======
->>>>>>> f91996f6247aa8a0754eafb4f7ad26a0754c3efd
+    /// Contador CODE SEGMENT
+public String updateProgramCounter(String line, String segment, List<Symbol> symbolTable) {
+    // Limpia la línea eliminando comentarios
+    if (line.contains(";")) {
+        line = line.split(";", 2)[0].trim();
+    }
+
+    // Ignorar líneas vacías
+    if (line.isEmpty()) {
+        return String.format("%04XH", currentAddress);
+    }
+
+    // Validar etiquetas
+    if (line.endsWith(":")) {
+        String label = line.substring(0, line.length() - 1).trim();
+        if (!LABEL_PATTERN.matcher(line).matches()) {
+            return "Error: Etiqueta no válida";
+        }
+
+        // Registrar la etiqueta en la tabla de símbolos
+        symbolTable.add(new Symbol(label, "etiqueta", "", "", String.format("%04XH", currentAddress)));
+        return String.format("%04XH", currentAddress);
+    }
+
+    // Validar y calcular el tamaño de instrucciones en el segmento de código
+    if (segment.equalsIgnoreCase(".code")) {
+        int size = calculateInstructionSize(line); // Método para calcular tamaño
+        if (size > 0) {
+            String address = String.format("%04XH", currentAddress); // Dirección inicial de la instrucción
+
+            // Registrar la instrucción en la tabla de símbolos
+            symbolTable.add(new Symbol(line, "instrucción", "", size + " bytes", address));
+
+            // Actualizar el contador de programa
+            currentAddress += size;
+            return address;
+        } else {
+            return "Error: Instrucción no reconocida";
+        }
+    }
+
+    // Manejar otras directivas o segmentos
+    return "Error: Línea fuera de segmento .code";
+}
+
+private int calculateInstructionSize(String line) {
+    if (line.equalsIgnoreCase("NOP")) {
+        return 1; // NOP ocupa 1 byte
+    } else if (line.toUpperCase().startsWith("MOV")) {
+        return 3; // MOV ocupa 3 bytes como ejemplo
+    } else if (line.toUpperCase().startsWith("INT")) {
+        return 2; // INT ocupa 2 bytes
+    } else if (line.toUpperCase().startsWith("ADD")) {
+        return 3; // ADD ocupa 3 bytes
+    }
+    // Agregar más instrucciones según sea necesario
+    return 0; // Instrucción no reconocida
+}
+
+private String[] analyzeCodeLine(String line) {
+    // Validar etiquetas
+    if (line.endsWith(":")) {
+        String label = line.substring(0, line.length() - 1).trim();
+        if (!LABEL_PATTERN.matcher(line).matches()) {
+            return new String[] { line, "incorrecta", "Etiqueta no válida" };
+        }
+        // Registrar la etiqueta en la tabla de símbolos
+        return new String[] { line, "correcta", String.format("%04XH", currentAddress) };
+    }
+
+    // Validar instrucciones
+    int size = calculateInstructionSize(line); // Método para calcular el tamaño de la instrucción
+    if (size > 0) {
+        String address = String.format("%04XH", currentAddress); // Dirección actual
+        currentAddress += size; // Actualizar el contador de programa
+        return new String[] { line, "correcta", address };
+    }
+
+    // Si no es válida
+    return new String[] { line, "incorrecta", "Error de sintaxis" };
+}
+
+
 
 }
