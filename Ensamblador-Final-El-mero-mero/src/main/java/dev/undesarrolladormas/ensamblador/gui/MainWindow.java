@@ -31,6 +31,7 @@ import javax.swing.table.DefaultTableModel;
 import dev.undesarrolladormas.ensamblador.funcs.CodeSegmentAnalyzer;
 import dev.undesarrolladormas.ensamblador.funcs.DataSegmentAnalyzer;
 import dev.undesarrolladormas.ensamblador.funcs.Identify;
+import dev.undesarrolladormas.ensamblador.funcs.musica;
 import dev.undesarrolladormas.utils.Files;
 
 public class MainWindow extends JFrame {
@@ -41,12 +42,15 @@ public class MainWindow extends JFrame {
         this.setMinimumSize(new Dimension(800, 600));
         this.setIconImage(new ImageIcon("Ensamblador-Final-El-mero-mero\\src\\main\\resources\\175181da-5df4-4711-a6e5-b389e6ea0082.jpg").getImage());
         this.init();
+        musica.reproducirAudio("Ensamblador-Final-El-mero-mero/src/main/resources/tambien-eres-fan-de-metallica_JH0oyPBp.wav");
     }
 
     private JTextPane textArea;
     private PaginatedTable tokensTablePagination;
     private PaginatedTable codificationTablePagination;
     private PaginatedTable symbolTablePagination;
+
+    
 
     private void init() {
         this.setLayout(new GridBagLayout());
@@ -106,6 +110,7 @@ public class MainWindow extends JFrame {
             CodeSegmentAnalyzer codeAnalyzer = new CodeSegmentAnalyzer(dataAnalyzer.getSymbolTable());
             List<String[]> codeResults = codeAnalyzer.analyze(assemblyCode);
 
+            
             // Combinar resultados del análisis de código y datos
             List<String[]> combinedResults = new ArrayList<>();
             combinedResults.addAll(dataResults);
@@ -129,10 +134,12 @@ public class MainWindow extends JFrame {
                 symbolData[i][1] = symbol.getType();
                 symbolData[i][2] = symbol.getValue();
                 symbolData[i][3] = String.valueOf(symbol.getSize());
+               // symbolData[i][4] = symbol.getAddress();
             }
 
-            // Actualizar la tabla de símbolos
-            symbolTablePagination.updateTable(symbolData);
+// Actualizar la tabla de símbolos con los datos del Code Segment
+symbolTablePagination.updateTable(symbolData);
+
         });
         exec.add(listarItem);
 
@@ -177,6 +184,7 @@ public class MainWindow extends JFrame {
         this.add(codificationTablePagination.getPanel(), gbc);
 
         // --------------------------------
+        
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -184,8 +192,10 @@ public class MainWindow extends JFrame {
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño", "Direccion"}, 10);
+        symbolTablePagination = new PaginatedTable(new String[] { "Símbolo", "Tipo", "Valor", "Tamaño","Direcccion"}, 10);
         this.add(symbolTablePagination.getPanel(), gbc);
+
+        
     }
     /*
      * Clase interna para manejar la paginación de tablas.
@@ -201,6 +211,7 @@ public class MainWindow extends JFrame {
         private String[][] data;
         private int currentPage;
         private final int rowsPerPage;
+        
 
         public PaginatedTable(String[] columnNames, int rowsPerPage) {
             this.rowsPerPage = rowsPerPage;
@@ -239,6 +250,8 @@ public class MainWindow extends JFrame {
             currentPage = 0;
             updatePage(0);
         }
+
+        
 
         private void updatePage(int page) {
             int totalRows = data.length;
