@@ -19,10 +19,10 @@ public class DataSegmentAnalyzer {
         String[] lines = assemblyCode.split("\\n");
         boolean inDataSegment = false;
         boolean inStackSegment = false;
-
+    
         for (String line : lines) {
             line = line.trim();
-
+    
             // Identificar el inicio de segmentos
             if (line.equalsIgnoreCase(".data segment") || line.equalsIgnoreCase(".data")) {
                 inDataSegment = true;
@@ -38,6 +38,9 @@ public class DataSegmentAnalyzer {
             } else if (line.equalsIgnoreCase("ends")) {
                 if (inDataSegment || inStackSegment) {
                     analysisResults.add(new String[] { line, "correcta", "" });
+    
+                    // Imprimir el valor final del contador de programa para el segmento actual
+                    System.out.println("Final del segmento: Dirección actual -> " + String.format("%04XH", currentAddress));
                 }
                 inDataSegment = false;
                 inStackSegment = false;
@@ -47,13 +50,13 @@ public class DataSegmentAnalyzer {
                 inStackSegment = false;
                 continue;
             }
-
+    
             // Analizar líneas dentro de segmentos
             if (inDataSegment) {
                 if (line.isEmpty() || line.startsWith(";")) {
                     continue;
                 }
-
+    
                 String[] result = analyzeDataLine(line);
                 analysisResults.add(result);
                 if (result[1].equals("correcta")) {
@@ -70,7 +73,7 @@ public class DataSegmentAnalyzer {
         }
         return analysisResults;
     }
-
+    
     private String[] analyzeDataLine(String line) {
     String[] parts = line.split("\\s+", 3); // Divide la línea en máximo 3 partes para preservar el valor
     if (parts.length >= 3 && isValidDataLine(line) && !isDirective(parts[2])) {
@@ -210,7 +213,6 @@ public class DataSegmentAnalyzer {
         // Patrón para validar `dw constante DUP(valor)`
         Pattern stackPattern = Pattern.compile("^\\s*dw\\s+\\d+\\s+dup\\(\\s*(-?\\d+)\\s*\\)\\s*$",
                 Pattern.CASE_INSENSITIVE);
-    
         if (stackPattern.matcher(line).matches()) {
             String[] parts = line.split("\\s+"); // Dividimos la línea para capturar los valores
             try {
@@ -231,7 +233,6 @@ public class DataSegmentAnalyzer {
         }
     }
     
-
     public List<Symbol> getSymbolTable() {
         return symbolTable;
     }
