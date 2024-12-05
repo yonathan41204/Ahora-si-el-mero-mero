@@ -61,11 +61,11 @@ public class CodeSegmentAnalyzer {
                 "^IDIV\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$",
                 Pattern.CASE_INSENSITIVE); // Patrón para IDIV
         SAR_PATTERN = Pattern.compile(
-                "^SAR\\s+([a-zA-Z_][a-zA-Z0-9_]|\\[[^\\]]+\\]|[0-9]+),\\s([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+)$",
-                Pattern.CASE_INSENSITIVE); // Patrón para SAR
+                    "^SAR\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s*([0-9]+|CL)$",
+                    Pattern.CASE_INSENSITIVE);
         TEST_PATTERN = Pattern.compile(
-                "^TEST\\s+([a-zA-Z_][a-zA-Z0-9_]|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+),\\s([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$",
-                Pattern.CASE_INSENSITIVE);
+                        "^TEST\\s+([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+),\\s([a-zA-Z_][a-zA-Z0-9_]*|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP|[0-9]+)$",
+                        Pattern.CASE_INSENSITIVE);        
         RCL_PATTERN = Pattern.compile(
                 "^RCL\\s+([a-zA-Z_][a-zA-Z0-9_]|\\[[^\\]]+\\]|AL|AX|BX|CX|DX|SI|DI|BP|SP),\\s([0-9]+|CL)$",
                 Pattern.CASE_INSENSITIVE);
@@ -155,7 +155,6 @@ public class CodeSegmentAnalyzer {
                     continue;
                 }
                 if (line.endsWith(":")) {
-<<<<<<< HEAD
     if (LABEL_PATTERN.matcher(line).matches()) {
         String label = line.substring(0, line.length() - 1).toLowerCase();
         if (RESERVED_WORDS.contains(label)) {
@@ -171,22 +170,6 @@ public class CodeSegmentAnalyzer {
     }
     continue;
 }    
-=======
-                    if (LABEL_PATTERN.matcher(line).matches()) {
-                        String label = line.substring(0, line.length() - 1).toLowerCase();
-                        if (RESERVED_WORDS.contains(label)) {
-                            analysisResults.add(
-                                    new String[] { line, "incorrecta", "Etiqueta no puede ser palabra reservada" });
-                        } else {
-                            declaredLabels.add(label);
-                            analysisResults.add(new String[] { line, "correcta" });
-                        }
-                    } else {
-                        analysisResults.add(new String[] { line, "incorrecta", "Etiqueta no válida" });
-                    }
-                    continue;
-                }
->>>>>>> f91996f6247aa8a0754eafb4f7ad26a0754c3efd
                 // Validación de las instrucciones seleccionadas
                 if (CLD_PATTERN.matcher(line).matches() ||
                         CLI_PATTERN.matcher(line).matches() ||
@@ -253,37 +236,33 @@ public class CodeSegmentAnalyzer {
         return analysisResults;
     }
 
+    //Instruccion SAR
     private String validateSAR(String line) {
         if (!SAR_PATTERN.matcher(line).matches()) {
             return "Error de sintaxis"; // Sintaxis básica de SAR incorrecta
         }
-
         // Dividir los operandos
         String[] parts = line.split("\\s+", 2);
         if (parts.length != 2 || !parts[1].contains(",")) {
             return "Error de sintaxis"; // Debe tener dos operandos separados por coma
         }
-
         String[] operands = parts[1].split("\\s*,\\s*");
         if (operands.length != 2) {
             return "Error de sintaxis"; // Debe tener exactamente dos operandos
         }
-
         String destino = operands[0].toLowerCase();
         String fuente = operands[1].toLowerCase();
-
         // Validar destino
         if (!destino.matches("al|ax|bx|cx|dx|si|di|bp|sp|\\[[^\\]]+\\]") && !declaredVariables.contains(destino)) {
-            return "Operando de destino inválido"; // Destino no es válido
+            return "Operando de destino inválido";
         }
-
         // Validar fuente (inmediato o registro)
         if (!fuente.matches("[0-9]+|cl|bp|") && !declaredVariables.contains(fuente)) {
             return "Operando de fuente inválido"; // Fuente no es válida
         }
-
         return "correcta"; // Todo está correcto
     }
+    
 
     private String validateMUL(String line) {
         if (!MUL_PATTERN.matcher(line).matches()) {
@@ -358,33 +337,35 @@ public class CodeSegmentAnalyzer {
         if (!TEST_PATTERN.matcher(line).matches()) {
             return "Error de sintaxis"; // Sintaxis básica incorrecta
         }
-
+        
         // Dividir los operandos
         String[] parts = line.split("\\s+", 2);
         if (parts.length != 2 || !parts[1].contains(",")) {
             return "Error de sintaxis"; // Debe tener dos operandos separados por coma
         }
-
+        
         String[] operands = parts[1].split("\\s*,\\s*");
         if (operands.length != 2) {
             return "Error de sintaxis"; // Debe tener exactamente dos operandos
         }
-
+    
         String destino = operands[0].toLowerCase();
         String fuente = operands[1].toLowerCase();
-
-        // Validar operando de destino
+        
+        // Validar operando de destino (incluye variables)
         if (!destino.matches("al|ax|bx|cx|dx|si|di|bp|sp|\\[[^\\]]+\\]") && !declaredVariables.contains(destino)) {
             return "Operando de destino inválido"; // Destino no es válido
         }
-
-        // Validar operando de fuente
+        
+        // Validar operando de fuente (también incluye variables)
         if (!fuente.matches("al|ax|bx|cx|dx|si|di|bp|sp|\\[[^\\]]+\\]|[0-9]+") && !declaredVariables.contains(fuente)) {
             return "Operando de fuente inválido"; // Fuente no es válida
         }
-
+    
         return "correcta"; // Todo está correcto
     }
+    
+    
 
     private String validateRCL(String line) {
         if (!RCL_PATTERN.matcher(line).matches()) {
@@ -462,18 +443,10 @@ public class CodeSegmentAnalyzer {
         if (!(operando2EsMemoria || operando2EsRegistro || operando2EsVariable)) {
             return "Operando 2 inválido"; // Operando 2 no es válido
         }
-
         // Ambos operandos no pueden ser memoria
         if (operando1EsMemoria && operando2EsMemoria) {
             return "Ambos operandos no pueden ser direcciones de memoria";
         }
-
         return "correcta"; // Todo está correcto
     }
-<<<<<<< HEAD
-
-
-=======
->>>>>>> f91996f6247aa8a0754eafb4f7ad26a0754c3efd
-
 }
