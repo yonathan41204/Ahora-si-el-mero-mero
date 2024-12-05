@@ -506,18 +506,65 @@ public String updateProgramCounter(String line, String segment, List<Symbol> sym
 }
 
 private int calculateInstructionSize(String line) {
+    // Instrucciones de 1 byte
     if (line.equalsIgnoreCase("NOP")) {
         return 1; // NOP ocupa 1 byte
+    } else if (line.equalsIgnoreCase("CLD")) {
+        return 1; // CLD ocupa 1 byte
+    } else if (line.equalsIgnoreCase("CLI")) {
+        return 1; // CLI ocupa 1 byte
+
+    // Instrucciones de 2 bytes
+    } else if (line.equalsIgnoreCase("POPA")) {
+        return 2; // POPA ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("AAD")) {
+        return 2; // AAD ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("AAM")) {
+        return 2; // AAM ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("JB")) {
+        return 2; // JB ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("JE")) {
+        return 2; // JE ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("JNLE")) {
+        return 2; // JNLE ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("JNP")) {
+        return 2; // JNP ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("JP")) {
+        return 2; // JP ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("JCXZ")) {
+        return 2; // JCXZ ocupa 2 bytes
+    } else if (line.equalsIgnoreCase("JZ")) {
+        return 2; // JZ ocupa 2 bytes
+
+    // Instrucciones de 2-3 bytes (dependen de los operandos)
     } else if (line.toUpperCase().startsWith("MOV")) {
-        return 3; // MOV ocupa 3 bytes como ejemplo
+        return 3; // MOV típicamente ocupa 2-3 bytes (suponemos 3 como promedio)
+    } else if (line.toUpperCase().startsWith("ADD")) {
+        return 3; // ADD típicamente ocupa 2-3 bytes
+    } else if (line.toUpperCase().startsWith("SUB")) {
+        return 3; // SUB típicamente ocupa 2-3 bytes
+    } else if (line.toUpperCase().startsWith("XCHG")) {
+        return 3; // XCHG típicamente ocupa 3 bytes
+    } else if (line.toUpperCase().startsWith("RCL")) {
+        return 3; // RCL típicamente ocupa 3 bytes
+    } else if (line.toUpperCase().startsWith("SAR")) {
+        return 3; // SAR típicamente ocupa 3 bytes
+    } else if (line.toUpperCase().startsWith("TEST")) {
+        return 3; // TEST típicamente ocupa 3 bytes
+    } else if (line.toUpperCase().startsWith("INC")) {
+        return 3; // INC típicamente ocupa 2-3 bytes (suponemos 3)
+    } else if (line.toUpperCase().startsWith("IDIV")) {
+        return 3; // IDIV típicamente ocupa 3 bytes
+    } else if (line.toUpperCase().startsWith("MUL")) {
+        return 3; // MUL típicamente ocupa 2-3 bytes (suponemos 3)
     } else if (line.toUpperCase().startsWith("INT")) {
         return 2; // INT ocupa 2 bytes
-    } else if (line.toUpperCase().startsWith("ADD")) {
-        return 3; // ADD ocupa 3 bytes
+
+    // Si no se reconoce la instrucción, devolver tamaño 0
     }
-    // Agregar más instrucciones según sea necesario
     return 0; // Instrucción no reconocida
 }
+
 
 private String[] analyzeCodeLine(String line) {
     // Validar etiquetas
